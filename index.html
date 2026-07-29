@@ -1,0 +1,570 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How the OS Thinks — Memory Architecture</title>
+<style>
+:root {
+  --bg:#ffffff; --ink:#0a0a0a; --dim:#5f5f5f; --faint:#a6a6a6;
+  --hair:#e6e6e6; --rule:#0a0a0a; --accent:#bd4b2a;
+  --sans:system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color-scheme:light;
+}
+* { box-sizing:border-box; } html,body { margin:0; }
+body { background:var(--bg); color:var(--ink); font-family:var(--sans); font-size:16px;
+  line-height:1.55; -webkit-font-smoothing:antialiased; padding:0 0 90px; font-synthesis:none; }
+body::after { content:""; position:fixed; top:0; left:0; right:0; height:4px; background:var(--accent); z-index:10; }
+.wrap { max-width:880px; margin:0 auto; padding:0 26px; }
+.back { display:inline-block; margin:28px 0 0; font-size:11px; letter-spacing:.14em;
+  text-transform:uppercase; font-weight:700; color:var(--accent); text-decoration:none; }
+
+header.doc { padding:26px 0 18px; border-bottom:2px solid var(--rule); }
+h1 { font-size:clamp(30px,6vw,44px); line-height:1.06; letter-spacing:-.025em; margin:.25em 0 .3em;
+  font-weight:700; text-wrap:balance; }
+.dek { font-size:17px; line-height:1.5; color:var(--dim); max-width:62ch; margin:0; }
+.meta { margin-top:14px; font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+  font-weight:700; color:var(--faint); }
+.meta b { color:var(--accent); font-weight:700; }
+
+h2 { font-size:12.5px; letter-spacing:.14em; text-transform:uppercase; font-weight:700;
+  margin:0 0 14px; padding-top:22px; border-top:2px solid var(--rule); }
+section { margin-top:44px; }
+p { margin:.6em 0; max-width:70ch; text-wrap:pretty; }
+p b { font-weight:700; }
+.lead { font-size:18px; line-height:1.5; }
+em { font-style:italic; }
+code { font-family:ui-monospace,Consolas,monospace; font-size:.85em; background:#f4f4f4; padding:.08em .35em; }
+
+/* ---- the schematic ---- */
+figure.schematic { margin:20px 0 6px; }
+figure.schematic svg { width:100%; height:auto; display:block; }
+figcaption { font-size:12px; color:var(--faint); margin-top:10px; max-width:70ch; }
+.svg-label { font-family:var(--sans); font-weight:700; font-size:11px; letter-spacing:.09em; text-transform:uppercase; }
+.svg-title { font-family:var(--sans); font-weight:700; font-size:14.5px; letter-spacing:-.01em; }
+.svg-small { font-family:var(--sans); font-weight:400; font-size:10.5px; }
+.svg-red { fill:var(--accent); }
+.svg-tool { font-family:ui-monospace,Consolas,monospace; font-size:10px; font-weight:700; fill:#0a0a0a; }
+
+/* ---- taxonomy band ---- */
+.tax { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); border-top:1px solid var(--hair); }
+.tax > div { padding:16px 18px 18px 0; border-bottom:1px solid var(--hair); }
+.tax .k { font-size:11px; letter-spacing:.12em; text-transform:uppercase; font-weight:700; margin-bottom:6px; }
+.tax .k.red { color:var(--accent); }
+.tax .h { font-weight:700; font-size:15px; margin-bottom:4px; }
+.tax .b { font-size:13.5px; color:var(--dim); line-height:1.45; }
+
+/* ---- organ ledger ---- */
+table { border-collapse:collapse; width:100%; font-size:13.5px; margin-top:4px; }
+th { text-align:left; font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--dim);
+  border-bottom:2px solid var(--ink); padding:.5em .9em .5em 0; vertical-align:bottom; }
+td { border-bottom:1px solid var(--hair); padding:.62em .9em .62em 0; vertical-align:top; }
+td.organ { font-weight:700; white-space:nowrap; }
+td.when { font-variant-numeric:tabular-nums; }
+.tblwrap table:not(.lin) th:nth-child(1) { width:18%; }
+.tblwrap table:not(.lin) th:nth-child(2) { width:15%; }
+.tblwrap table:not(.lin) th:nth-child(3) { width:51%; }
+.tblwrap table:not(.lin) th:nth-child(4) { width:16%; }
+.lin th:nth-child(1) { width:17%; }
+.lin th:nth-child(2) { width:41%; }
+.lin th:nth-child(3) { width:42%; }
+td .sub { display:block; font-weight:400; font-size:11.5px; color:var(--faint); margin-top:1px; }
+.brain { color:var(--dim); font-size:12px; }
+.tblwrap { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+
+/* ---- clock strip ---- */
+.clock { border-top:1px solid var(--hair); }
+.clock .row { display:flex; gap:14px; padding:9px 0; border-bottom:1px solid var(--hair);
+  font-size:13.5px; align-items:baseline; }
+.clock .t { font-weight:700; font-variant-numeric:tabular-nums; min-width:118px; white-space:nowrap; }
+.clock .what { color:var(--ink); }
+.clock .what span { color:var(--faint); font-size:12px; }
+
+.footnote { margin-top:56px; padding-top:16px; border-top:1px solid var(--hair);
+  font-size:11px; letter-spacing:.12em; text-transform:uppercase; font-weight:700; color:var(--faint); }
+
+@media (max-width:640px) {
+  .wrap { padding:0 18px; }
+  h1 { font-size:29px; }
+  td, th { font-size:12.5px; }
+}
+/* ---- tappable stores + expansion section ---- */
+svg a { cursor:pointer; outline:none; }
+svg a:hover rect, svg a:focus rect { stroke:var(--accent); }
+svg a:hover .svg-title, svg a:focus .svg-title { fill:var(--accent); }
+.store { border-bottom:1px solid var(--hair); padding:18px 0 20px; scroll-margin-top:20px; }
+.store:target { border-left:3px solid var(--accent); padding-left:16px; }
+.store .lbl { font-size:11px; letter-spacing:.12em; text-transform:uppercase; font-weight:700; margin-bottom:7px; }
+.store .lbl .up { float:right; color:var(--accent); text-decoration:none; font-weight:700; }
+.store p { font-size:14px; }
+.shelves { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:0 26px; margin-top:8px; }
+.shelves > div { padding:12px 0 14px; border-top:1px solid var(--hair); }
+.shelves .sh { font-weight:700; font-size:13.5px; margin-bottom:3px; }
+.shelves .sh code { font-weight:700; }
+.shelves .sd { font-size:13px; color:var(--dim); line-height:1.5; }
+
+/* phones: ledger tables stack — four columns never fit 360px */
+@media (max-width:640px) {
+  .tblwrap thead { display:none; }
+  .tblwrap table, .tblwrap tbody, .tblwrap tr, .tblwrap td { display:block; width:100%; }
+  .tblwrap tr { border-bottom:1px solid var(--hair); padding:12px 0 14px; }
+  .tblwrap td { border-bottom:none; padding:.15em 0; white-space:normal; }
+  .tblwrap td.organ, .tblwrap td.when { white-space:normal; }
+  td.when::before, td.brain-lbl::before, .lin td:nth-of-type(2)::before, .lin td:nth-of-type(3)::before {
+    display:block; font-size:10px; letter-spacing:.12em; text-transform:uppercase;
+    font-weight:700; color:var(--faint); margin:.4em 0 .05em; }
+  td.when::before { content:"fires"; }
+  td.brain::before { content:"brain analog"; display:block; font-size:10px; letter-spacing:.12em;
+    text-transform:uppercase; font-weight:700; color:var(--faint); margin:.4em 0 .05em; }
+  .lin td:nth-of-type(2)::before { content:"borrowed from"; }
+  .lin td:nth-of-type(3)::before { content:"in translation"; }
+}
+/* circulation animation: a pulse of signal travels each path in prompt-order.
+   Overlay-only — the static diagram is complete without it (reduced-motion safe). */
+.flow path { fill:none; stroke:#00ffff; stroke-width:3; stroke-linecap:round;
+  opacity:0; stroke-dasharray:12 88; stroke-dashoffset:112; }
+.flow .fdash { stroke-width:2.4; }
+@keyframes pulsetravel {
+  0%   { stroke-dashoffset:112; opacity:0; }
+  6%   { opacity:.9; }
+  46%  { opacity:.9; }
+  55%  { stroke-dashoffset:-14; opacity:0; }
+  100% { stroke-dashoffset:-14; opacity:0; }
+}
+.flow path { animation: pulsetravel 7.2s cubic-bezier(.4,0,.2,1) infinite; }
+.flow .f1 { animation-delay:0s; }
+.flow .f2 { animation-delay:.9s; }
+.flow .f3 { animation-delay:1.8s; }
+.flow .f4 { animation-delay:3.0s; }
+.flow .f5 { animation-delay:4.4s; }
+@media (prefers-reduced-motion:reduce) { * { animation:none!important; transition:none!important; } }
+</style></head>
+<body>
+<div class="wrap">
+
+<header class="doc">
+  <h1>How the OS thinks</h1>
+  <p class="dek">The personal OS is a memory prosthesis for a frontier model. The model arrives brilliant and amnesiac: trained on everything in general, knowing nothing about this life in particular — and the particulars change daily. Every organ below exists to close that gap without ever guessing a fact, losing a day silently, or believing something it can't source. What follows is one running instance of a portable pattern — the specifics are examples; the architecture is the point.</p>
+  <div class="meta"><span style="color:var(--ink)">Thomas Simon</span> · <a href="mailto:thomasjsimon@gmail.com" style="color:var(--faint);text-decoration:none">thomasjsimon@gmail.com</a> · personal OS · memory architecture · rewritten <b>2026-07-15</b> · stores expanded <b>2026-07-28</b> · living document, regenerate when the wiring changes</div>
+</header>
+
+<section>
+<h2>The problem, precisely</h2>
+<p class="lead">A language model stores <b>distributions, not records</b>. It learns "what lighting manufacturers are like" from a million exposures; it cannot reliably learn "what happened Tuesday" from one. So everything specific — the people, the projects, the deadlines, the decisions — must be <em>retrieved into the context window at the moment of use</em>, not hoped for from the weights.</p>
+<p>That reframes the whole system: the context window is the model's working memory, and in-context learning is functionally a temporary weight update — scoped to one session, fully auditable, instantly reversible. The OS's entire job is deciding <b>what earns a place in that window, when, and with what proof</b>. Retrieval quality is intelligence here; the repo is a context management system before it is anything else.</p>
+</section>
+
+<section>
+<h2>The memory taxonomy it serves</h2>
+<div class="tax">
+  <div>
+    <div class="k">Weights</div>
+    <div class="h">The gist</div>
+    <div class="b">General knowledge, language, judgment priors. Learned slowly by the lab, amortized across everyone. Nothing personal lives here — it can't be audited or deleted.</div>
+  </div>
+  <div>
+    <div class="k red">Context window</div>
+    <div class="h">Working memory</div>
+    <div class="b">Ephemeral, precious, degrades as it fills. Holds the live thread plus whatever the organs inject. Cleared at seams between threads, never mid-thought.</div>
+  </div>
+  <div>
+    <div class="k">Files + index</div>
+    <div class="h">Long-term explicit</div>
+    <div class="b">The corpus: memories, people, projects, doctrine. Every belief is a line with provenance that can be found, corrected, or deleted — the property weights can never offer.</div>
+  </div>
+  <div>
+    <div class="k">Ledger data</div>
+    <div class="h">Never-guess facts</div>
+    <div class="b">VINs, balances, deadlines, entry numbers. Read deterministically from files and systems of record, never generated. A guess here is a failure, not an approximation.</div>
+  </div>
+</div>
+<p style="margin-top:14px">The human analogy is exact, and it runs the same architecture: cortex (weights, slow), working memory (context), hippocampus (episodic capture), consolidation during sleep (<code>/consolidate</code>), and written records for what the brain should never improvise. Biology retrains nightly <em>and still needs the hippocampus</em> — which is why "just fine-tune the model on my life every night" doesn't dissolve this system. Weights can't take one-shot facts, and worse, they can't forget on command.</p>
+</section>
+
+<section>
+<h2>The circulation — one prompt, end to end</h2>
+<figure class="schematic" id="circulation">
+<svg viewBox="0 0 880 560" role="img" aria-label="Schematic of the OS memory circulation: stores feed the context window through the recall hook; writes pass a validator gate; session end feeds episodic capture, which consolidation returns to the semantic store.">
+  <!-- STORES (left column) -->
+  <g>
+    <text x="20" y="30" class="svg-label" fill="#a6a6a6">The stores · long-term</text>
+    <a href="#store-semantic" aria-label="Semantic memory — details below">
+    <rect x="20" y="44" width="230" height="66" fill="none" stroke="#0a0a0a" stroke-width="1.5"/>
+    <text x="34" y="70" class="svg-title">Semantic memory</text>
+    <text x="34" y="88" class="svg-small" fill="#5f5f5f">176 typed files + MEMORY.md index</text>
+    </a>
+    <a href="#store-episodic" aria-label="Episodic memory — details below">
+    <rect x="20" y="122" width="230" height="66" fill="none" stroke="#0a0a0a" stroke-width="1.5"/>
+    <text x="34" y="148" class="svg-title">Episodic memory</text>
+    <text x="34" y="166" class="svg-small" fill="#5f5f5f">session cards, one per conversation</text>
+    </a>
+    <a href="#store-corpus" aria-label="The corpus — details below">
+    <rect x="20" y="200" width="230" height="66" fill="none" stroke="#0a0a0a" stroke-width="1.5"/>
+    <text x="34" y="226" class="svg-title">The corpus</text>
+    <text x="34" y="244" class="svg-small" fill="#5f5f5f">people/ · projects · properties · wiki</text>
+    </a>
+    <!-- search index spans the three -->
+    <a href="#store-index" aria-label="index.db — details below">
+    <rect x="20" y="286" width="230" height="60" fill="#0a0a0a" stroke="#0a0a0a" stroke-width="1.5"/>
+    <text x="34" y="308" class="svg-title" fill="#ffffff">index.db</text>
+    <text x="34" y="324" class="svg-small" fill="#a6a6a6">FTS5 + vector search over all stores</text>
+    <text x="34" y="338" class="svg-small" fill="#a6a6a6">rebuilt every session start</text>
+    </a>
+    <text x="20" y="368" class="svg-small" fill="#5f5f5f">recall, every prompt: hybrid keyword + semantic</text>
+    <text x="20" y="382" class="svg-small" fill="#5f5f5f">search, rank-fused, wikilink-expanded</text>
+  </g>
+
+  <!-- CONSOLIDATE: tight loop, episodic -> semantic -->
+  <g>
+    <path d="M 250 146 L 272 146 L 272 88 L 254 88" fill="none" stroke="#bd4b2a" stroke-width="2" stroke-dasharray="5 4"/>
+    <path d="M 254 88 l 9 -5 v 10 z" fill="#bd4b2a"/>
+    <text x="282" y="112" class="svg-label svg-red">consolidate</text>
+  </g>
+
+  <!-- RECALL arrow to context -->
+  <g>
+    <path d="M 250 316 L 330 316 L 330 150 L 398 150" fill="none" stroke="#bd4b2a" stroke-width="2.5"/>
+    <path d="M 398 150 l -9 -5 v 10 z" fill="#bd4b2a"/>
+    <text x="340" y="252" class="svg-label svg-red">recall</text>
+  </g>
+
+  <!-- ALWAYS LOADED (top center) -->
+  <g>
+    <text x="404" y="30" class="svg-label" fill="#a6a6a6">Always loaded</text>
+    <rect x="404" y="44" width="240" height="52" fill="none" stroke="#0a0a0a" stroke-width="1.5" stroke-dasharray="4 3"/>
+    <text x="418" y="66" class="svg-small">CLAUDE.md routing · rules (voice, stance)</text>
+    <text x="418" y="82" class="svg-small">MEMORY.md hot working set</text>
+    <path d="M 524 96 L 524 122" fill="none" stroke="#0a0a0a" stroke-width="1.5"/>
+    <path d="M 524 122 l -5 -9 h 10 z" fill="#0a0a0a"/>
+  </g>
+
+  <!-- CONTEXT WINDOW (center) -->
+  <g>
+    <rect x="404" y="124" width="240" height="118" fill="none" stroke="#0a0a0a" stroke-width="3"/>
+    <text x="424" y="156" class="svg-title" font-size="17">Context window</text>
+    <text x="424" y="176" class="svg-small" fill="#5f5f5f">working memory · the live thread</text>
+    <text x="424" y="192" class="svg-small" fill="#5f5f5f">+ everything recalled for this prompt</text>
+    <text x="424" y="214" class="svg-label svg-red">in-context =</text>
+    <text x="424" y="230" class="svg-label svg-red">temporary weights</text>
+  </g>
+
+  <!-- MODEL (right of context) -->
+  <g>
+    <path d="M 644 183 L 700 183" fill="none" stroke="#0a0a0a" stroke-width="2"/>
+    <path d="M 700 183 l -9 -5 v 10 z" fill="#0a0a0a"/>
+    <rect x="702" y="124" width="158" height="118" fill="none" stroke="#0a0a0a" stroke-width="1.5"/>
+    <text x="720" y="156" class="svg-title">Frontier model</text>
+    <text x="720" y="176" class="svg-small" fill="#5f5f5f">weights: the gist,</text>
+    <text x="720" y="192" class="svg-small" fill="#5f5f5f">general priors, judgment</text>
+    <text x="720" y="222" class="svg-small" fill="#a6a6a6">nothing personal stored</text>
+  </g>
+
+  <!-- WRITE GATE (below context, down to stores) -->
+  <g>
+    <path d="M 470 242 L 470 330 L 258 330" fill="none" stroke="#0a0a0a" stroke-width="2"/>
+    <path d="M 258 330 l 9 -5 v 10 z" fill="#0a0a0a"/>
+    <rect x="410" y="312" width="120" height="36" fill="#ffffff" stroke="#bd4b2a" stroke-width="2.5"/>
+    <text x="424" y="335" class="svg-label svg-red">validator gate</text>
+    <text x="544" y="335" class="svg-small" fill="#5f5f5f">every memory write:</text>
+    <text x="544" y="349" class="svg-small" fill="#5f5f5f">provenance checked, ledgered — no unsourced beliefs</text>
+  </g>
+
+  <!-- SESSION END -> EPISODIC -->
+  <g>
+    <path d="M 590 242 L 590 420 L 300 420 L 300 168 L 254 168" fill="none" stroke="#0a0a0a" stroke-width="2" stroke-dasharray="5 4"/>
+    <path d="M 254 168 l 9 -5 v 10 z" fill="#0a0a0a"/>
+    <text x="604" y="408" class="svg-label" fill="#0a0a0a">session end / compact</text>
+    <text x="604" y="424" class="svg-small" fill="#5f5f5f">episodic capture writes the session card</text>
+    <text x="604" y="438" class="svg-small" fill="#5f5f5f">(/save-clear forces it — bare /clear loses the day)</text>
+  </g>
+
+  <!-- consolidate caption, bottom left -->
+  <g>
+    <text x="20" y="470" class="svg-label svg-red">consolidate · the sleep cycle</text>
+    <text x="20" y="488" class="svg-small" fill="#5f5f5f">on demand: distills episodic cards into durable semantic memories,</text>
+    <text x="20" y="502" class="svg-small" fill="#5f5f5f">proposes merges + retirements — never writes without approval</text>
+  </g>
+
+  <!-- lint note bottom right -->
+  <g>
+    <text x="604" y="470" class="svg-label" fill="#a6a6a6">session start</text>
+    <text x="604" y="488" class="svg-small" fill="#5f5f5f">index rebuild + corpus lint: broken links</text>
+    <text x="604" y="502" class="svg-small" fill="#5f5f5f">and index drift surface before work starts</text>
+  </g>
+
+  <!-- circulation pulses: same geometry as the paths below, drawn as traveling signal -->
+  <g class="flow" aria-hidden="true">
+    <path class="f1" pathLength="100" d="M 250 316 L 330 316 L 330 150 L 398 150"/>
+    <path class="f2" pathLength="100" d="M 644 183 L 700 183"/>
+    <path class="f3" pathLength="100" d="M 470 242 L 470 330 L 258 330"/>
+    <path class="f4 fdash" pathLength="100" d="M 590 242 L 590 420 L 300 420 L 300 168 L 254 168"/>
+    <path class="f5 fdash" pathLength="100" d="M 250 146 L 272 146 L 272 88 L 254 88"/>
+  </g>
+</svg>
+<figcaption>One conversational turn — the traveling pulse repeats it: recall in, model out, write through the gate, capture at close, consolidate back.  Solid black: the synchronous path. Red: the two safeguards — recall (what gets in) and the validator gate (what gets written). Dashed: the asynchronous metabolism — capture at death, consolidation on a cadence. Nothing personal ever enters the weights; everything personal is a file with a source. <b>The four store boxes are tappable</b> — each opens in “Inside the stores,” just below.</figcaption>
+</figure>
+</section>
+
+<section class="stores">
+<h2>Inside the stores</h2>
+<p>The left column of the diagram, opened up. Four stores, four different lifecycles — but every shelf in them earned its place by answering the same three questions: what context does it hold, what triggers its retrieval, and who tends it.</p>
+
+<div class="store" id="store-semantic">
+  <div class="lbl">Semantic memory · atomic facts <a class="up" href="#circulation">&uarr; diagram</a></div>
+  <p>One durable fact per file, 176 of them, in four types: <code>user_</code> (who the principal is — role, constraints, preferences), <code>feedback_</code> (how the model should work with them, always with the why), <code>project_</code> (ongoing threads), <code>reference_</code> (where things live and how they run). Each file carries provenance in its frontmatter — the session it came from — and links sideways with wikilinks. <b>MEMORY.md is the index over them</b>: one pointer line per memory, loaded into every session as the hot working set, byte-capped and gated at write time so it can't silently outgrow what a session actually reads. Cooled memories move to an archive tier: out of the always-loaded index, still fully searchable.</p>
+</div>
+
+<div class="store" id="store-episodic">
+  <div class="lbl">Episodic memory · what happened <a class="up" href="#circulation">&uarr; diagram</a></div>
+  <p>One card per conversation, written automatically when a session ends or compacts. The card holds a summary and a list of who and what was mentioned; the full transcript sits alongside it for verification. This is the raw material consolidation distills into semantic memories — and it's gated at write time so routine automation runs (in this instance, a Sunday brief and a daily news scrape) don't fill the store with cron noise. The store remembers days, not machinery.</p>
+</div>
+
+<div class="store" id="store-corpus">
+  <div class="lbl">The corpus · the repo itself <a class="up" href="#circulation">&uarr; diagram</a></div>
+  <p>Everything that isn't a memory file is the corpus: the repository's domain folders, which are the primary record, not documentation of it. The memory stores mostly <em>point into</em> the corpus; the corpus is where the actual state lives.</p>
+  <div class="shelves">
+    <div>
+      <div class="sh"><code>people/</code> — the Rolodex</div>
+      <div class="sd">One file per contact plus a network map with cadences and last touches. Triggered whenever a name appears in conversation. Serves the whole OS — school, household, venture threads — not one domain.</div>
+    </div>
+    <div>
+      <div class="sh">Domain folders — the projects</div>
+      <div class="sd">One folder per domain of the life in question — in this instance <code>properties/</code> (three of them, personal vs LLC walled off), <code>family/</code>, <code>yale-emba/</code>, <code>ai-development/</code>. Each carries its own CLAUDE.md doc index; the root routing layer sends a topic to its domain instead of loading everything everywhere.</div>
+    </div>
+    <div>
+      <div class="sh"><code>knowledge/</code> — the wiki</div>
+      <div class="sd">Two layers: <code>raw/</code> keeps sources as they arrived (PDFs, clipped posts, transcripts); <code>wiki/</code> keeps what they were distilled into — frameworks, source notes, recurring themes. Reading flows in by pull, gets a worth-verdict, and only the durable part is kept.</div>
+    </div>
+    <div>
+      <div class="sh"><code>tools/</code> + <code>routines/</code> — the machinery</div>
+      <div class="sd">The running surfaces and their specs: this board and its pages, the inbox safari, and the source-of-truth definitions for every scheduled routine the clock below executes.</div>
+    </div>
+  </div>
+</div>
+
+<div class="store" id="store-index" style="border-bottom:none">
+  <div class="lbl">index.db · the search layer <a class="up" href="#circulation">&uarr; diagram</a></div>
+  <p>Not a store of beliefs — a derived lookup over all three stores above. Rebuilt from scratch at every session start, so it can never drift far from the files; queried by the recall hook on every single prompt with hybrid search (FTS5 keyword + vector similarity, rank-fused), then expanded one hop along wikilinks so a hit drags in its neighbors. The files are the truth; index.db is how a two-second lookup finds them.</p>
+</div>
+</section>
+
+<section>
+<h2>The life of a session</h2>
+<p>Everything above is plumbing for one repeating unit of work: a session. Each one is born knowing the doctrine, works with a private context window, and dies leaving everything durable on disk. The discipline is entirely at the two ends — birth is automatic, close-out is a ritual, and skipping the ritual is the only way to lose a day.</p>
+
+<figure class="schematic">
+<svg viewBox="0 0 880 436" role="img" aria-label="Timeline of one session with the named tools: birth runs memory_sync and os_lint and loads CLAUDE.md and MEMORY.md; every turn runs memory_recall and validate_os_memory; close-out runs save-clear, metabolism_stats, and memory_episodic.">
+  <text x="20" y="30" class="svg-label" fill="#a6a6a6">One session · birth to close</text>
+  <path d="M 20 56 L 848 56" fill="none" stroke="#0a0a0a" stroke-width="2"/>
+  <path d="M 848 56 l -9 -5 v 10 z" fill="#0a0a0a"/>
+  <path d="M 145 56 L 145 90 M 435 56 L 435 90 M 730 56 L 730 90" fill="none" stroke="#0a0a0a" stroke-width="1.5"/>
+
+  <rect x="20" y="90" width="250" height="200" fill="none" stroke="#0a0a0a" stroke-width="1.5"/>
+  <text x="34" y="116" class="svg-title">Birth</text>
+  <text x="34" y="134" class="svg-small" fill="#a6a6a6">session-start hooks, automatic</text>
+  <text x="34" y="156" class="svg-small" fill="#5f5f5f">index rebuilt + corpus linted</text>
+  <text x="34" y="171" class="svg-tool">memory_sync.py · os_lint.py</text>
+  <text x="34" y="193" class="svg-small" fill="#5f5f5f">doctrine + hot index load</text>
+  <text x="34" y="208" class="svg-tool">CLAUDE.md · rules/ · MEMORY.md</text>
+  <text x="34" y="230" class="svg-small" fill="#5f5f5f">a spinoff child reads its staged brief</text>
+  <text x="34" y="245" class="svg-tool">scratch/session-brief-*.md</text>
+
+  <rect x="310" y="90" width="250" height="200" fill="none" stroke="#0a0a0a" stroke-width="1.5"/>
+  <text x="324" y="116" class="svg-title">Every turn</text>
+  <text x="324" y="134" class="svg-small" fill="#a6a6a6">&#215; N, the working loop</text>
+  <text x="324" y="156" class="svg-small" fill="#5f5f5f">recall injects what this prompt needs</text>
+  <text x="324" y="171" class="svg-tool">memory_recall.py</text>
+  <text x="324" y="193" class="svg-small" fill="#5f5f5f">model works · file edits hit the disk</text>
+  <text x="324" y="215" class="svg-small" fill="#5f5f5f">memory writes pass the gate</text>
+  <text x="324" y="230" class="svg-tool">validate_os_memory.py</text>
+  <text x="324" y="252" class="svg-label svg-red" font-size="10">files are fleet-visible instantly</text>
+
+  <rect x="600" y="90" width="260" height="200" fill="none" stroke="#0a0a0a" stroke-width="1.5"/>
+  <text x="614" y="116" class="svg-title">Close-out</text>
+  <text x="614" y="134" class="svg-small" fill="#a6a6a6">a ritual with a checklist</text>
+  <text x="614" y="156" class="svg-small" fill="#5f5f5f">sweeps: board, ledgers, open items</text>
+  <text x="614" y="171" class="svg-tool">/save-clear · /save-kill</text>
+  <text x="614" y="193" class="svg-small" fill="#5f5f5f">metabolism review — propose-only</text>
+  <text x="614" y="208" class="svg-tool">metabolism_stats.py</text>
+  <text x="614" y="230" class="svg-small" fill="#5f5f5f">episodic card forced to disk</text>
+  <text x="614" y="245" class="svg-tool">memory_episodic.py</text>
+  <text x="614" y="267" class="svg-label svg-red" font-size="10">bare /clear fires no hooks — an</text>
+  <text x="614" y="281" class="svg-label svg-red" font-size="10">uncaptured day evaporates</text>
+
+  <path d="M 145 346 L 145 290" fill="none" stroke="#0a0a0a" stroke-width="2"/>
+  <path d="M 145 290 l -5 9 h 10 z" fill="#0a0a0a"/>
+  <text x="157" y="322" class="svg-label" fill="#5f5f5f" font-size="10">reads</text>
+  <path d="M 405 290 L 405 346" fill="none" stroke="#0a0a0a" stroke-width="2"/>
+  <path d="M 405 346 l -5 -9 h 10 z" fill="#0a0a0a"/>
+  <text x="352" y="322" class="svg-label" fill="#5f5f5f" font-size="10">writes</text>
+  <path d="M 465 346 L 465 290" fill="none" stroke="#bd4b2a" stroke-width="2"/>
+  <path d="M 465 290 l -5 9 h 10 z" fill="#bd4b2a"/>
+  <text x="477" y="322" class="svg-label svg-red" font-size="10">recall</text>
+  <path d="M 730 290 L 730 346" fill="none" stroke="#0a0a0a" stroke-width="2" stroke-dasharray="5 4"/>
+  <path d="M 730 346 l -5 -9 h 10 z" fill="#0a0a0a"/>
+  <text x="742" y="322" class="svg-label" fill="#5f5f5f" font-size="10">capture</text>
+
+  <rect x="20" y="350" width="840" height="56" fill="#0a0a0a"/>
+  <text x="34" y="374" class="svg-title" fill="#ffffff">the disk</text>
+  <text x="34" y="392" class="svg-small" fill="#a6a6a6">repo files · memory stores · episodic cards · index.db — durable, shared, the only thing that survives the window</text>
+
+  <g class="flow" aria-hidden="true">
+    <path class="f1" pathLength="100" d="M 465 346 L 465 290"/>
+    <path class="f2" pathLength="100" d="M 405 290 L 405 346"/>
+    <path class="f4 fdash" pathLength="100" d="M 730 290 L 730 346"/>
+  </g>
+</svg>
+<figcaption>One session, birth to close. Birth is automatic (hooks), the loop runs as long as the thread deserves, close-out is a ritual with a checklist. The red warning is the sharpest lesson in the system: clearing a window without the ritual destroys everything the disk never received.</figcaption>
+</figure>
+
+<figure class="schematic">
+<svg viewBox="0 0 880 400" role="img" aria-label="Multiple sessions in parallel lanes. Live context never crosses between lanes; all sharing passes through the disk. A spinoff is born from a staged brief and its episodic card is recalled later by another session.">
+  <text x="20" y="30" class="svg-label" fill="#a6a6a6">The fleet · sessions in parallel</text>
+  <text x="558" y="30" class="svg-label svg-red">live context never crosses lanes</text>
+
+  <text x="20" y="70" class="svg-title" font-size="13">main</text>
+  <text x="20" y="85" class="svg-small" fill="#a6a6a6">standing channel</text>
+  <path d="M 110 80 L 848 80" fill="none" stroke="#0a0a0a" stroke-width="2"/>
+  <path d="M 848 80 l -9 -5 v 10 z" fill="#0a0a0a"/>
+
+  <text x="20" y="146" class="svg-title" font-size="13">research</text>
+  <text x="20" y="161" class="svg-small" fill="#a6a6a6">standing channel</text>
+  <path d="M 110 156 L 848 156" fill="none" stroke="#0a0a0a" stroke-width="2"/>
+  <path d="M 848 156 l -9 -5 v 10 z" fill="#0a0a0a"/>
+
+  <text x="20" y="222" class="svg-title" font-size="13">spinoff</text>
+  <text x="20" y="237" class="svg-small" fill="#a6a6a6">born scoped, dies finished</text>
+  <path d="M 330 232 L 640 232" fill="none" stroke="#0a0a0a" stroke-width="2"/>
+  <circle cx="330" cy="232" r="4" fill="#bd4b2a"/>
+  <path d="M 636 226 L 648 238 M 648 226 L 636 238" fill="none" stroke="#0a0a0a" stroke-width="2"/>
+
+  <path d="M 300 80 L 300 200 L 326 228" fill="none" stroke="#bd4b2a" stroke-width="2" stroke-dasharray="5 4"/>
+  <path d="M 326 228 l -11 -2 6 -8 z" fill="#bd4b2a"/>
+  <text x="146" y="196" class="svg-label svg-red" font-size="10">/spinoff: brief staged to disk,</text>
+  <text x="146" y="210" class="svg-label svg-red" font-size="10">child reads it at birth</text>
+
+  <path d="M 190 80 L 190 306" fill="none" stroke="#0a0a0a" stroke-width="1.5"/>
+  <path d="M 190 306 l -5 -9 h 10 z" fill="#0a0a0a"/>
+  <path d="M 520 156 L 520 306" fill="none" stroke="#0a0a0a" stroke-width="1.5"/>
+  <path d="M 520 306 l -5 -9 h 10 z" fill="#0a0a0a"/>
+  <text x="200" y="300" class="svg-label" fill="#5f5f5f" font-size="10">writes, all day</text>
+
+  <path d="M 640 232 L 640 306" fill="none" stroke="#0a0a0a" stroke-width="2" stroke-dasharray="5 4"/>
+  <path d="M 640 306 l -5 -9 h 10 z" fill="#0a0a0a"/>
+  <text x="652" y="280" class="svg-label" fill="#5f5f5f" font-size="10">dies: card + files</text>
+
+  <path d="M 780 306 L 780 80" fill="none" stroke="#bd4b2a" stroke-width="2" stroke-dasharray="5 4"/>
+  <path d="M 780 80 l -5 9 h 10 z" fill="#bd4b2a"/>
+  <text x="672" y="130" class="svg-label svg-red" font-size="10">recalled later,</text>
+  <text x="672" y="144" class="svg-label svg-red" font-size="10">by any session</text>
+
+  <rect x="20" y="310" width="840" height="56" fill="#0a0a0a"/>
+  <text x="34" y="334" class="svg-title" fill="#ffffff">the disk</text>
+  <text x="34" y="352" class="svg-small" fill="#a6a6a6">everything crosses here, or not at all</text>
+
+  <g class="flow" aria-hidden="true">
+    <path class="f1" pathLength="100" d="M 190 80 L 190 306"/>
+    <path class="f3" pathLength="100" d="M 300 80 L 300 200 L 326 228"/>
+    <path class="f5" pathLength="100" d="M 780 306 L 780 80"/>
+  </g>
+</svg>
+<figcaption>The zoom-out: in this instance, a couple dozen tmux channels on one always-on box, each a private window onto the same disk. A spinoff is the deliberate version of context transfer — the parent writes a scoped brief into the repo, the child is born reading it, and the child dies finished, leaving its card behind.</figcaption>
+</figure>
+
+<p><b>The sharing rules, precisely.</b> When does one session see another's activity? There are exactly three answers. <b>File writes: immediately.</b> The moment a session saves a contact file, a status row, or a memory, every other session can read it — coordination happens by writing early and often, not by talking. <b>Conversation content: at close-out.</b> What was <em>said</em> in a window — decisions, reasoning, dead ends — exists nowhere else until the close-out ritual captures it as an episodic card and pushes conclusions into their files. Until then, other sessions can't see it at all. <b>Unwritten context: never.</b> A window cleared without capture takes its contents with it permanently.</p>
+<p>Two consequences run the fleet. First, one thread per channel: since live context is private, splitting one thread across two sessions guarantees neither has the whole picture. Second, <code>/spinoff</code> exists because handing work to a new session means <em>staging its context to disk first</em> — the child cannot see the parent's conversation, so the parent writes a brief (sources, deliverables, constraints, death step) into the repo and the child's first act is to read it. Context transfer is a file, not a memory.</p>
+</section>
+
+<section>
+<h2>The organs — what runs, where, when, and why</h2>
+<div class="tblwrap">
+<table>
+<thead><tr><th>Organ</th><th>Fires</th><th>Problem it solves</th><th>Analog</th></tr></thead>
+<tbody>
+<tr><td class="organ">Recall hook<span class="sub">memory_recall.py</span></td><td class="when">every prompt</td><td>The window can't hold everything, so relevance is computed per-prompt: hybrid keyword + vector search over all stores, rank-fused, wikilink-expanded. Retrieval instead of residence — the answer to "the last 48 hours should be available" without carrying 48 hours of raw context.</td><td class="brain">association cortex</td></tr>
+<tr><td class="organ">Semantic store<span class="sub">176 memory files + MEMORY.md</span></td><td class="when">index always; files on recall</td><td>Durable typed facts (who, how-to-work, projects, references), one file per belief, provenance in frontmatter. The index is a bounded hot working set — a cache with admission rules, not a document that grows until it silently overflows.</td><td class="brain">long-term memory</td></tr>
+<tr><td class="organ">Episodic capture<span class="sub">memory_episodic.py</span></td><td class="when">session end · pre-compact · forced by /save-clear</td><td>Weights can't take one-shot events; sessions die. Each conversation becomes a retrievable card so no day evaporates. The forced path exists because bare <code>/clear</code> fires no hooks — discovered the hard way.</td><td class="brain">hippocampus</td></tr>
+<tr><td class="organ">Provenance validator<span class="sub">validate_os_memory.py + ledger</span></td><td class="when">every memory write</td><td>A false belief written today is retrieved as truth forever. The gate blocks fabricated citations at write time and ledgers every write — the immune system that makes the store trustworthy enough to act on.</td><td class="brain">immune system</td></tr>
+<tr><td class="organ">Consolidation<span class="sub">/consolidate</span></td><td class="when">on demand, propose-only</td><td>Episodic cards pile up; duplicates and dead facts accrete. Distills sessions into semantic memories, proposes merges and retirements. Judgment stays human — it proposes, never autowrites.</td><td class="brain">sleep</td></tr>
+<tr><td class="organ">Index sync + lint<span class="sub">memory_sync.py · os_lint.py</span></td><td class="when">session start</td><td>Search is only as good as its index; the corpus drifts as many sessions write in parallel. Rebuilds index.db, checks wikilinks and index integrity, reports drift before it compounds. Quiet when clean.</td><td class="brain">glymphatic housekeeping</td></tr>
+<tr><td class="organ">Session lifecycle<span class="sub">/save-clear · /save-kill · spinoff briefs</span></td><td class="when">at thread seams</td><td>Context degrades as it fills, so sessions are cleared at seams between threads — but only after a defined save-all sweep. Controlled forgetting: the window stays sharp because the stores are trusted to remember.</td><td class="brain">forgetting, on purpose</td></tr>
+<tr><td class="organ">Rules + routing<span class="sub">CLAUDE.md · soul/stance/anti-patterns</span></td><td class="when">always loaded</td><td>Voice, honesty-over-agreement, and named failure modes survive every context reset because they're files, not vibes. The routing layer sends each topic to its domain index instead of loading everything.</td><td class="brain">prefrontal constraint</td></tr>
+<tr><td class="organ">Skills + commands<span class="sub">dispatch rules with trigger surfaces</span></td><td class="when">on trigger match</td><td>Procedures the system should perform the same way every time (frame-checks, closures, publishing routes). The description is the trigger; the when-clause matters more than the procedure.</td><td class="brain">procedural memory</td></tr>
+<tr><td class="organ">Routines<span class="sub">systemd timers → claude -p wrappers</span></td><td class="when">on the clock (below)</td><td>Work that must happen without anyone thinking of it. All local on one always-on box; every wrapper verifies a confirmation token in the output because exit codes lie.</td><td class="brain">autonomic system</td></tr>
+<tr><td class="organ">The board<span class="sub">dashboard, regenerated per page load</span></td><td class="when">continuous</td><td>The read surface: Focus, queues, rot made visible. Renders the files, never owns data; checkboxes stage intent for a session to route with judgment. What the system knows, made glanceable.</td><td class="brain">the face</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section>
+<h2>The clock — what runs unattended</h2>
+<div class="clock">
+  <div class="row"><span class="t">daily, pre-wake</span><span class="what">dashboard regenerate — the board is fresh before anyone looks at it <span>· systemd</span></span></div>
+  <div class="row"><span class="t">weekly, sunday</span><span class="what">the weekly brief — week shape assembled from OS files + calendars, delivered by email <span>· cron</span></span></div>
+  <div class="row"><span class="t">per event</span><span class="what">hooks — recall (each prompt) · validator (each memory write) · sync + lint (session start) · episodic capture (session end/compact) <span>· Claude Code</span></span></div>
+</div>
+<p style="margin-top:14px">Other timers come and go with the work — a news scrape, a digest, a weekly evaluation batch — and every one has the same shape: a timer, a headless <code>claude -p</code> wrapper, and a confirmation token verified in the output, because exit codes lie. Everything runs on one always-on machine. Cloud scheduling was tried and retired: local means direct file access, one scheduler, one place to look when something misfires.</p>
+</section>
+
+<section>
+<h2>Why this and not fine-tuning</h2>
+<p>The obvious question: if the model needs to know this life, why not train it on this life? Three reasons, each sufficient. <b>Weights can't take one-shot facts</b> — a single day's events are statistically invisible to training, and repeating them enough to stick damages what the model already knows. <b>Weights can't forget</b> — a false belief smeared across parameters has no line number; in this system, a wrong memory was once caught, traced, and deleted as one file, which is the whole safety model. And <b>the frontier isn't yours to train</b> — a personal fine-tune rides a lesser model, trading general intelligence for familiarity; retrieval gets both.</p>
+<p>The bet underneath: whatever the mechanism becomes — better retrieval now, some form of continual learning later — <b>the curated, provenance-tracked corpus is the durable asset</b>. It's simultaneously the retrieval substrate of today and the training set of whenever. The organs keep it clean; the corpus compounds.</p>
+</section>
+
+<section>
+<h2>Lineage — none of this is invented here</h2>
+<p>The system borrows on principle: for every piece, a mature discipline had already solved the problem and named the pattern — and named patterns come with vocabulary the model already understands for free. Some of it is canonical science, some of it is a gist from three months ago; both get credited. What's original is only the assembly.</p>
+<div class="tblwrap">
+<table class="lin">
+<thead><tr><th>Piece</th><th>Borrowed from</th><th>What changed in translation</th></tr></thead>
+<tbody>
+<tr><td class="organ">Semantic / episodic split</td><td>Tulving, "Episodic and Semantic Memory" (1972) — the founding taxonomy of cognitive psychology</td><td>Kept literally: typed durable facts in one store, dated event cards in another. The names on the boxes are his.</td></tr>
+<tr><td class="organ">Capture now,<br>consolidate later</td><td>Complementary learning systems (McClelland, McNaughton &amp; O'Reilly, 1995): a fast hippocampal store, slow cortical weights, replay during sleep</td><td>Episodic capture plays the hippocampus; <code>/consolidate</code> plays sleep — run on demand and propose-only instead of nightly and automatic.</td></tr>
+<tr><td class="organ">Context window as<br>paged working memory</td><td>Baddeley &amp; Hitch's working-memory model (1974); MemGPT (Packer et&nbsp;al., 2023), which first treated the LLM window as an OS's scarce RAM</td><td>The seam discipline (<code>/save-clear</code>, spinoff briefs) is the paging policy — with a human choosing the seams.</td></tr>
+<tr><td class="organ">Recall per prompt</td><td>Retrieval-augmented generation (Lewis et&nbsp;al., 2020); hybrid lexical + vector search fused by reciprocal rank fusion (Cormack et&nbsp;al., 2009)</td><td>The standard modern IR stack, pointed at a life instead of a document collection.</td></tr>
+<tr><td class="organ">index.db</td><td>SQLite (D. Richard Hipp, 2000) and its FTS5 full-text engine with BM25 relevance ranking (Robertson &amp; Spärck Jones lineage)</td><td>One derived file over all stores, rebuilt from the truth at every session start — disposable by design, so it can never be wrong for long.</td></tr>
+<tr><td class="organ">Typed memory files<br>+ recall hook</td><td>The agent-memory wave: MemGPT/Letta, Mem0, Zep's Graphiti (2023–25) — surveyed before building</td><td>Same goals, different bet: plain markdown files and a grepable store instead of a hosted memory database, so the human can read, correct, and delete what the model believes.</td></tr>
+<tr><td class="organ">The wiki</td><td>Ward Cunningham's WikiWikiWeb (1995) for the form; Luhmann's Zettelkasten — via Ahrens, <em>How to Take Smart Notes</em> (2017) — for the pipeline; Obsidian's <code>[[wikilink]]</code> convention for the graph; Karpathy's <em>llm-wiki</em> idea file (2026) for the operating model — the LLM maintains the wiki, the human curates sources</td><td>Sources land in <code>raw/</code>, synthesis lives in <code>wiki/</code> (Luhmann's literature notes vs permanent notes, verbatim); the links double as retrieval expansion.</td></tr>
+<tr><td class="organ">The hot index</td><td>Cache design — a small, admission-controlled fast layer over a large slow store; Claude Code's memory-file convention</td><td>MEMORY.md is a byte-capped cache of pointers with a write-time gate, not a document that grows.</td></tr>
+<tr><td class="organ">No unsourced beliefs</td><td>Scholarly citation discipline; data lineage from data engineering</td><td>Enforced by a hook at write time, not caught by review after — a fabricated citation never lands.</td></tr>
+<tr><td class="organ">The metabolism</td><td>Memory back-pressure from agent-memory research (the Hermes agent study, 2026); the AI Maker second-brain post (2026) for resurfacing; GTD's weekly review for the cadence</td><td>Overflow pressure <em>prompts</em> consolidation instead of forcing it; proposals only, never autowrites.</td></tr>
+</tbody>
+</table>
+</div>
+
+<p style="margin-top:26px"><b>And the nearer shelf.</b> The rows above are what the architecture rhymes with; the rows below are what this instance was literally assembled from — practitioner templates saved into a source folder before a line of it existed. Less citable, more causal.</p>
+<div class="tblwrap">
+<table class="lin">
+<thead><tr><th>Piece</th><th>Taken from</th><th>What changed in translation</th></tr></thead>
+<tbody>
+<tr><td class="organ">The "OS" pattern itself</td><td>Aakash Gupta's PM&nbsp;OS and Team&nbsp;OS templates (news.aakashg.com), incl. his Hannah Stulberg case study — a PM running a 20-person team from a Claude Code repo</td><td>A repo of markdown with a CLAUDE.md routing layer as the working environment. Generalized from PM work to a whole life; the per-folder doc-index convention survives almost verbatim.</td></tr>
+<tr><td class="organ">Memory-layer mechanics</td><td>The Claude Code memory-layer template (v1.0) — write-time schema enforcement in a PostToolUse hook, judgment-gated promotion, session-end consolidation</td><td>Same trigger points, rebuilt around provenance: the schema check became the validator gate, and consolidation became propose-only with the human signing every write.</td></tr>
+<tr><td class="organ">Commands + cheatsheet</td><td>Wyndo's claude-code-starter — a small set of commands, one agent, and a comprehensive cheat sheet as the whole on-ramp</td><td>The shape held: slash commands for repeated procedures, and a living cheatsheet that's still served from this board.</td></tr>
+<tr><td class="organ">Skills as procedure</td><td>The Superpowers plugin — composable skills plus instructions that make the agent actually reach for them</td><td>Kept the doctrine, not the code: a skill is a dispatch rule, and the trigger description matters more than the procedure it wraps.</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section>
+<h2>Appendix — principles of the index</h2>
+<p style="border-left:none;font-style:italic;color:var(--dim);max-width:66ch;margin:.4em 0 1.2em">"Some things come forth immediately; others must be sought longer, as though dug out of more secret receptacles; others rush out in troops, and while a different thing is asked, they leap into the midst, as if to say, <em>is it perchance I?</em> These I drive away from the face of my remembrance, until what I wish for be unveiled and appear out of its secret place."<br><span style="font-style:normal;font-size:12px;color:var(--faint)">— Augustine, Confessions X — hybrid retrieval, ranked candidates, and a reranker, ca. 400 AD</span></p>
+
+<p><b>The index is a list of lights, not a book.</b> MEMORY.md exists so that a fresh session <em>recognizes</em> — the light goes on: "I know this, go look." Title plus a few words of hook is the minimum recognition unit; a bare name doesn't disambiguate, a paragraph is content smuggled into a cache. Detail always lives in the file the pointer names.</p>
+
+<p><b>The reader determines the format.</b> The index is read by a language model in context; the stores are read by search engines. Each gets the redundancy its reader needs. Aliases, codenames, and alternate spellings go in <em>file bodies</em> (uncapped, where FTS5's literal matching needs the exact string); the index never spends capped bytes on fuzziness its reader supplies for free.</p>
+
+<p><b>The model's prior is the codebook.</b> Compressing hooks into private notation is a false economy three ways: it discards the pretrained prior that decompresses prose for free; it requires shipping decode instructions (bytes plus error risk — a misread index is worse than a fat one); and it often loses on the true cost unit, since tokenizers are trained on prose (~4 chars/token) and symbol-soup fragments into 1–2. The most efficient encoding for a model is well-chosen natural language.</p>
+
+<p><b>Structure by type where machines compute; prose where the model reads.</b> Type-grouping is real compression, implemented one level up: people, companies, and properties live in their own stores with their own indexes; memory filenames carry their type prefix inside the pointer, so the tag rides for free. The general rule: format is cost when read into context, capability when computed over.</p>
+
+<p><b>The compression frontier is selection, not encoding.</b> Past lean hooks, bytes are recovered by consolidation (merge related entries) and eviction (a cold entry's recognition value decays toward zero while its byte cost stays constant). Evicted things stop lighting up automatically but stay fully findable — the file and the search index still hold them. Same deal biological working memory makes.</p>
+
+<p><b>Enforced, not remembered.</b> The pointer discipline is a write-time gate in the validator (lines over budget or files near the read ceiling are blocked with fix-it feedback), because an index that silently outgrows its read limit fails invisibly — the bottom of the file simply stops existing to every future session. Deterministic rules go in hooks; judgment goes in reviews.</p>
+
+<p><b>A failed grep proves little.</b> Grep is the crudest of three recognition paths (hot index, automatic hybrid recall, deliberate search). A thing is functionally unknown only when all three miss — and the recorded-alias convention exists to make that state rare: when something acquires a second name in the wild, write it down where search can see it.</p>
+</section>
+
+<div class="footnote">Shared copy of a living page, 2026-07-28 · the instance runs on an always-on box at home · a sibling system runs the day job (process cyan)</div>
+</div>
+</body></html>
