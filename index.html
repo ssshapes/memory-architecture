@@ -135,6 +135,37 @@ svg a:hover .svg-title, svg a:focus .svg-title { fill:var(--accent); }
 .flow .f3 { animation-delay:1.8s; }
 .flow .f4 { animation-delay:3.0s; }
 .flow .f5 { animation-delay:4.4s; }
+/* worked-example replay: five beats on a 12s clock, matched to the hero pulses.
+   Static state (reduced motion) = all five lines visible. */
+.replay { margin-top:18px; border-top:1px solid var(--hair); padding-top:10px; }
+.rp-head { font-size:11px; letter-spacing:.14em; text-transform:uppercase; font-weight:700; margin-bottom:8px; }
+.rp-head span { color:var(--faint); }
+.rp { font-size:13px; color:var(--dim); padding:4px 0; line-height:1.45; }
+.rp code { font-size:.9em; }
+.rk { display:inline-block; min-width:86px; font-size:10px; letter-spacing:.12em;
+  text-transform:uppercase; font-weight:700; color:var(--ink); margin-right:8px; }
+.rk-red { color:var(--accent); }
+@keyframes rb1 { 0%,2%{opacity:0} 5%,93%{opacity:1} 98%,100%{opacity:0} }
+@keyframes rb2 { 0%,16%{opacity:0} 19%,93%{opacity:1} 98%,100%{opacity:0} }
+@keyframes rb3 { 0%,40%{opacity:0} 43%,93%{opacity:1} 98%,100%{opacity:0} }
+@keyframes rb4 { 0%,58%{opacity:0} 61%,93%{opacity:1} 98%,100%{opacity:0} }
+@keyframes rb5 { 0%,78%{opacity:0} 81%,93%{opacity:1} 98%,100%{opacity:0} }
+.rp.b1 { animation: rb1 12s linear infinite; }
+.rp.b2 { animation: rb2 12s linear infinite; }
+.rp.b3 { animation: rb3 12s linear infinite; }
+.rp.b4 { animation: rb4 12s linear infinite; }
+.rp.b5 { animation: rb5 12s linear infinite; }
+/* hero pulses on the same 12s clock, one per beat */
+@keyframes ps1 { 0%,3%{stroke-dashoffset:112;opacity:0} 5%{opacity:.9} 9%{opacity:.9} 12%{stroke-dashoffset:-14;opacity:0} 100%{stroke-dashoffset:-14;opacity:0} }
+@keyframes ps2 { 0%,16%{stroke-dashoffset:112;opacity:0} 18%{opacity:.9} 28%{opacity:.9} 32%{stroke-dashoffset:-14;opacity:0} 100%{stroke-dashoffset:-14;opacity:0} }
+@keyframes ps3 { 0%,40%{stroke-dashoffset:112;opacity:0} 42%{opacity:.9} 47%{opacity:.9} 50%{stroke-dashoffset:-14;opacity:0} 100%{stroke-dashoffset:-14;opacity:0} }
+@keyframes ps4 { 0%,58%{stroke-dashoffset:112;opacity:0} 60%{opacity:.9} 67%{opacity:.9} 70%{stroke-dashoffset:-14;opacity:0} 100%{stroke-dashoffset:-14;opacity:0} }
+@keyframes ps5 { 0%,78%{stroke-dashoffset:112;opacity:0} 80%{opacity:.9} 88%{opacity:.9} 92%{stroke-dashoffset:-14;opacity:0} 100%{stroke-dashoffset:-14;opacity:0} }
+.flow path.ps1 { animation: ps1 12s linear infinite; }
+.flow path.ps2 { animation: ps2 12s linear infinite; }
+.flow path.ps3 { animation: ps3 12s linear infinite; }
+.flow path.ps4 { animation: ps4 12s linear infinite; }
+.flow path.ps5 { animation: ps5 12s linear infinite; }
 @media (prefers-reduced-motion:reduce) { * { animation:none!important; transition:none!important; } }
 </style></head>
 <body>
@@ -145,39 +176,6 @@ svg a:hover .svg-title, svg a:focus .svg-title { fill:var(--accent); }
   <p class="dek">The personal OS is a memory prosthesis for a frontier model. The model arrives brilliant and amnesiac: trained on everything in general, knowing nothing about this life in particular — and the particulars change daily. Every organ below exists to close that gap without ever guessing a fact, losing a day silently, or believing something it can't source. What follows is one running instance of a portable pattern — the specifics are examples; the architecture is the point.</p>
   <div class="meta"><span style="color:var(--ink)">Thomas Simon</span> · <a href="mailto:thomasjsimon@gmail.com" style="color:var(--faint);text-decoration:none">thomasjsimon@gmail.com</a> · personal OS · memory architecture · rewritten <b>2026-07-15</b> · stores expanded <b>2026-07-28</b> · living document, regenerate when the wiring changes</div>
 </header>
-
-<section>
-<h2>The problem, precisely</h2>
-<p class="lead">A language model stores <b>distributions, not records</b>. It learns "what lighting manufacturers are like" from a million exposures; it cannot reliably learn "what happened Tuesday" from one. So everything specific — the people, the projects, the deadlines, the decisions — must be <em>retrieved into the context window at the moment of use</em>, not hoped for from the weights.</p>
-<p>That reframes the whole system: the context window is the model's working memory, and in-context learning is functionally a temporary weight update — scoped to one session, fully auditable, instantly reversible. The OS's entire job is deciding <b>what earns a place in that window, when, and with what proof</b>. Retrieval quality is intelligence here; the repo is a context management system before it is anything else.</p>
-</section>
-
-<section>
-<h2>The memory taxonomy it serves</h2>
-<div class="tax">
-  <div>
-    <div class="k">Weights</div>
-    <div class="h">The gist</div>
-    <div class="b">General knowledge, language, judgment priors. Learned slowly by the lab, amortized across everyone. Nothing personal lives here — it can't be audited or deleted.</div>
-  </div>
-  <div>
-    <div class="k red">Context window</div>
-    <div class="h">Working memory</div>
-    <div class="b">Ephemeral, precious, degrades as it fills. Holds the live thread plus whatever the organs inject. Cleared at seams between threads, never mid-thought.</div>
-  </div>
-  <div>
-    <div class="k">Files + index</div>
-    <div class="h">Long-term explicit</div>
-    <div class="b">The corpus: memories, people, projects, doctrine. Every belief is a line with provenance that can be found, corrected, or deleted — the property weights can never offer.</div>
-  </div>
-  <div>
-    <div class="k">Ledger data</div>
-    <div class="h">Never-guess facts</div>
-    <div class="b">VINs, balances, deadlines, entry numbers. Read deterministically from files and systems of record, never generated. A guess here is a failure, not an approximation.</div>
-  </div>
-</div>
-<p style="margin-top:14px">The human analogy is exact, and it runs the same architecture: cortex (weights, slow), working memory (context), hippocampus (episodic capture), consolidation during sleep (<code>/consolidate</code>), and written records for what the brain should never improvise. Biology retrains nightly <em>and still needs the hippocampus</em> — which is why "just fine-tune the model on my life every night" doesn't dissolve this system. Weights can't take one-shot facts, and worse, they can't forget on command.</p>
-</section>
 
 <section>
 <h2>The circulation — one prompt, end to end</h2>
@@ -292,15 +290,56 @@ svg a:hover .svg-title, svg a:focus .svg-title { fill:var(--accent); }
 
   <!-- circulation pulses: same geometry as the paths below, drawn as traveling signal -->
   <g class="flow" aria-hidden="true">
-    <path class="f1" pathLength="100" d="M 250 316 L 330 316 L 330 150 L 398 150"/>
-    <path class="f2" pathLength="100" d="M 644 183 L 700 183"/>
-    <path class="f3" pathLength="100" d="M 470 242 L 470 330 L 258 330"/>
-    <path class="f4 fdash" pathLength="100" d="M 590 242 L 590 420 L 300 420 L 300 168 L 254 168"/>
-    <path class="f5 fdash" pathLength="100" d="M 250 146 L 272 146 L 272 88 L 254 88"/>
+    <path class="ps2" pathLength="100" d="M 250 316 L 330 316 L 330 150 L 398 150"/>
+    <path class="ps3" pathLength="100" d="M 644 183 L 700 183"/>
+    <path class="ps4" pathLength="100" d="M 470 242 L 470 330 L 258 330"/>
+    <path class="ps5 fdash" pathLength="100" d="M 590 242 L 590 420 L 300 420 L 300 168 L 254 168"/>
+    <path class="ps1 fdash" pathLength="100" d="M 524 96 L 524 122"/>
   </g>
 </svg>
-<figcaption>One conversational turn — the traveling pulse repeats it: recall in, model out, write through the gate, capture at close, consolidate back.  Solid black: the synchronous path. Red: the two safeguards — recall (what gets in) and the validator gate (what gets written). Dashed: the asynchronous metabolism — capture at death, consolidation on a cadence. Nothing personal ever enters the weights; everything personal is a file with a source. <b>The four store boxes are tappable</b> — each opens in “Inside the stores,” just below.</figcaption>
+<figcaption>One conversational turn — the traveling pulse repeats it: recall in, model out, write through the gate, capture at close, consolidate back.  Solid black: the synchronous path. Red: the two safeguards — recall (what gets in) and the validator gate (what gets written). Dashed: the asynchronous metabolism — capture at death, consolidation on a cadence. Nothing personal ever enters the weights; everything personal is a file with a source. <b>The four store boxes are tappable</b> — each opens in “Inside the stores,” further down the page.</figcaption>
+<div class="replay" aria-label="A worked example of one prompt moving through the system">
+  <div class="rp-head">One prompt, replayed <span>· 12-second loop, synced to the pulses above</span></div>
+  <div class="rp b1"><span class="rk">prompt</span>"Marco quoted $1,400 for the boiler — same guy as last winter?"</div>
+  <div class="rp b2"><span class="rk rk-red">recall</span>hits: <code>people/marco-rivera.md</code> · last winter's session card · the boiler ledger — injected into context</div>
+  <div class="rp b3"><span class="rk">model</span>same Marco — last winter's job was $1,150; this quote adds the expansion tank</div>
+  <div class="rp b4"><span class="rk rk-red">write gate</span>new fact lands with its source: "7/29 quote — Marco, $1,400, tank included"</div>
+  <div class="rp b5"><span class="rk">capture</span>at close-out the whole exchange becomes a session card — findable by every future session</div>
+</div>
 </figure>
+</section>
+
+<section>
+<h2>The problem, precisely</h2>
+<p class="lead">A language model stores <b>distributions, not records</b>. It learns "what lighting manufacturers are like" from a million exposures; it cannot reliably learn "what happened Tuesday" from one. So everything specific — the people, the projects, the deadlines, the decisions — must be <em>retrieved into the context window at the moment of use</em>, not hoped for from the weights.</p>
+<p>That reframes the whole system: the context window is the model's working memory, and in-context learning is functionally a temporary weight update — scoped to one session, fully auditable, instantly reversible. The OS's entire job is deciding <b>what earns a place in that window, when, and with what proof</b>. Retrieval quality is intelligence here; the repo is a context management system before it is anything else.</p>
+</section>
+
+<section>
+<h2>The memory taxonomy it serves</h2>
+<div class="tax">
+  <div>
+    <div class="k">Weights</div>
+    <div class="h">The gist</div>
+    <div class="b">General knowledge, language, judgment priors. Learned slowly by the lab, amortized across everyone. Nothing personal lives here — it can't be audited or deleted.</div>
+  </div>
+  <div>
+    <div class="k red">Context window</div>
+    <div class="h">Working memory</div>
+    <div class="b">Ephemeral, precious, degrades as it fills. Holds the live thread plus whatever the organs inject. Cleared at seams between threads, never mid-thought.</div>
+  </div>
+  <div>
+    <div class="k">Files + index</div>
+    <div class="h">Long-term explicit</div>
+    <div class="b">The corpus: memories, people, projects, doctrine. Every belief is a line with provenance that can be found, corrected, or deleted — the property weights can never offer.</div>
+  </div>
+  <div>
+    <div class="k">Ledger data</div>
+    <div class="h">Never-guess facts</div>
+    <div class="b">VINs, balances, deadlines, entry numbers. Read deterministically from files and systems of record, never generated. A guess here is a failure, not an approximation.</div>
+  </div>
+</div>
+<p style="margin-top:14px">The human analogy is exact, and it runs the same architecture: cortex (weights, slow), working memory (context), hippocampus (episodic capture), consolidation during sleep (<code>/consolidate</code>), and written records for what the brain should never improvise. Biology retrains nightly <em>and still needs the hippocampus</em> — which is why "just fine-tune the model on my life every night" doesn't dissolve this system. Weights can't take one-shot facts, and worse, they can't forget on command.</p>
 </section>
 
 <section class="stores">
