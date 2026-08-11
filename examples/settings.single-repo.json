@@ -1,0 +1,60 @@
+{
+  "notes": "Hook wiring for one repo. Merge the 'hooks' block into your existing .claude/settings.json; the rest of that file (permissions, model, env) is untouched by this system. Commands run through a shell, so $HOME and $CLAUDE_PROJECT_DIR both expand and no absolute path is needed. The interpreter is the venv from INSTALL.md step 1: it must be the venv one, because sqlite-vec and fastembed live there. Sync output is redirected to a log rather than stdout, because SessionStart stdout lands in your context and a sync summary every session is noise. os_lint prints nothing when the corpus is clean, so it stays on stdout on purpose: when it does speak, you want to see it.",
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$HOME/.venvs/memory/bin/python\" \"$CLAUDE_PROJECT_DIR/.claude/hooks/memory_recall.py\""
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$HOME/.venvs/memory/bin/python\" \"$CLAUDE_PROJECT_DIR/.claude/hooks/memory_sync.py\" >> \"$HOME/.cache/claude-memory-sync.log\" 2>&1"
+          },
+          {
+            "type": "command",
+            "command": "\"$HOME/.venvs/memory/bin/python\" \"$CLAUDE_PROJECT_DIR/.claude/hooks/os_lint.py\""
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$HOME/.venvs/memory/bin/python\" \"$CLAUDE_PROJECT_DIR/.claude/hooks/memory_episodic.py\""
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$HOME/.venvs/memory/bin/python\" \"$CLAUDE_PROJECT_DIR/.claude/hooks/memory_episodic.py\""
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$HOME/.venvs/memory/bin/python\" \"$CLAUDE_PROJECT_DIR/.claude/hooks/validate_os_memory.py\""
+          }
+        ]
+      }
+    ]
+  }
+}

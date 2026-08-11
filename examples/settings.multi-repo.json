@@ -1,0 +1,60 @@
+{
+  "notes": "The multi-repo pattern. This file goes in a SECOND repo (here called 'work') whose hooks point at the organs installed in the first one. Two things make it work: MEMORY_OS names the store, so this repo gets its own index, episodic archive, recall log and provenance ledger under ~/.cache/work-memory/ and can never bleed into the other repo's memory. MEMORY_OS_ROOT names the repo being served, because the organs live somewhere else and can no longer derive it from their own location. Set ORGANS to wherever you installed the hooks. Everything else is identical to the single-repo wiring. Note that ONE checkout of the organs serves both repos: upgrade once, and every repo gets it.",
+  "env": {
+    "MEMORY_OS": "work",
+    "MEMORY_OS_ROOT": "$CLAUDE_PROJECT_DIR"
+  },
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "ORGANS=\"$HOME/os/.claude/hooks\"; MEMORY_OS=work MEMORY_OS_ROOT=\"$CLAUDE_PROJECT_DIR\" \"$HOME/.venvs/memory/bin/python\" \"$ORGANS/memory_recall.py\""
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "ORGANS=\"$HOME/os/.claude/hooks\"; MEMORY_OS=work MEMORY_OS_ROOT=\"$CLAUDE_PROJECT_DIR\" \"$HOME/.venvs/memory/bin/python\" \"$ORGANS/memory_sync.py\" >> \"$HOME/.cache/claude-memory-sync.log\" 2>&1; MEMORY_OS=work MEMORY_OS_ROOT=\"$CLAUDE_PROJECT_DIR\" \"$HOME/.venvs/memory/bin/python\" \"$ORGANS/os_lint.py\""
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "ORGANS=\"$HOME/os/.claude/hooks\"; MEMORY_OS=work MEMORY_OS_ROOT=\"$CLAUDE_PROJECT_DIR\" \"$HOME/.venvs/memory/bin/python\" \"$ORGANS/memory_episodic.py\""
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "ORGANS=\"$HOME/os/.claude/hooks\"; MEMORY_OS=work MEMORY_OS_ROOT=\"$CLAUDE_PROJECT_DIR\" \"$HOME/.venvs/memory/bin/python\" \"$ORGANS/memory_episodic.py\""
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "ORGANS=\"$HOME/os/.claude/hooks\"; MEMORY_OS=work MEMORY_OS_ROOT=\"$CLAUDE_PROJECT_DIR\" \"$HOME/.venvs/memory/bin/python\" \"$ORGANS/validate_os_memory.py\""
+          }
+        ]
+      }
+    ]
+  }
+}
