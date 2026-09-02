@@ -92,6 +92,8 @@ Nothing here is invented. The retrieval is standard hybrid search with Reciproca
 
 The one bet that is not borrowed: plain markdown files and a disposable index, rather than a hosted memory service. The corpus is the durable asset. The organs are replaceable, and this repo exists so you can replace them.
 
+**Convergent, independently:** Cal Paterson's [Memoryfield](https://calpaterson.com/memoryfields.html) ([spec](https://github.com/calpaterson/memoryfield-spec)) arrives at the same shape from the other direction: agent memory as plain markdown files with YAML frontmatter and a SQLite vector index alongside, on the argument that memory should be inspectable data rather than a retrieval pipeline or a vendor feature. The schemas map almost field for field (`name`/`title`, `description`/`summary`, `modified`/`updated`). Memoryfield is an interchange format, a zip you can hand to another agent, and it carries two fields this repo lacks, `uuid` and `created`. This repo is the working store: provenance (`originSessionId`), a typed vocabulary, non-destructive supersession, and a curated always-loaded index on top of the same markdown-plus-index foundation. Two people who did not talk to each other choosing files over a database is a better argument for the bet than either could make alone.
+
 ## License
 
 MIT. See [LICENSE](LICENSE).
