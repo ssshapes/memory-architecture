@@ -153,6 +153,38 @@ Worst-case exposure while the timer is running: one interval of uncaptured conve
 
 **While you are here:** if you run scheduled or headless sessions, their transcripts recur forever and contain nothing durable. Put the opening line of each one in `config.ROUTINE_SIGNATURES` and they are never captured. Doing this at the source is much less work than pruning weekly chaff by hand later.
 
+### 8b. The weekly page regenerate
+
+`build_memory_index.py` turns MEMORY.md into a derived view: run it once by hand to see the dry run (it writes a preview under the cache directory and prints who made the page and who fell below the fold), then `--apply`, which backs the old page up under `memory/archive/` first. After that it belongs on a timer, once a week at a quiet hour, and at the end of every `/consolidate`. It needs at least a couple of weeks of `recall_log.db` to rank on; before that, every memory scores by its inbound links and the newborn floor, which is fine.
+
+```ini
+# ~/.config/systemd/user/memory-index.service
+[Unit]
+Description=Regenerate MEMORY.md from measured use
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/your-os
+ExecStart=/usr/bin/python3 %h/your-os/.claude/hooks/build_memory_index.py --apply
+
+# ~/.config/systemd/user/memory-index.timer
+[Unit]
+Description=Weekly page regenerate
+
+[Timer]
+OnCalendar=Sun 03:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+```
+
+```
+systemctl --user enable --now memory-index.timer
+```
+
+The lint knows the page is derived (it starts with `*DERIVED VIEW`) and stops asking for a line per memory; instead it flags a page older than `INDEX_STALE_DAYS` and any memory file that is absent from the recall index, which is now the layer that guarantees every memory is reachable.
+
 ## 9. Several repos, one set of organs
 
 **Purpose:** if you keep work and personal in separate repos, they should not share a memory store, and you should not maintain two copies of the code.

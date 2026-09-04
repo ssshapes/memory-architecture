@@ -24,6 +24,10 @@ WHAT IS DERIVED vs WHAT IS WRITTEN BY HAND
       hooks/config.py   README.md   INSTALL.md   LICENSE
       commands/*.md     skills/*    examples/*   index.html
 
+  HAND-PORTED (private originals rewritten against config.py by hand, once;
+  the build leaves them alone, the leak check does not):
+      hooks/build_memory_index.py   hooks/memory_archive.py
+
   Both classes are leak-checked. The check is the guarantee; the derivation is
   only how the code class gets there.
 
@@ -675,6 +679,22 @@ def t_os_lint(o: Organ) -> None:
             "    slop_dirs = [repo / d for d in cfg.SLOP_DIRS]\n",
             "slop config -> config", flags=re.DOTALL)
 
+    # derived-page awareness (2026-09-03): thresholds and the index path come
+    # from config; the instance's timer name and hook path do not travel.
+    o.sub("            if age_d > 8:\n", "            if age_d > cfg.INDEX_STALE_DAYS:\n", "stale days -> config")
+    o.sub('".claude/hooks/build_memory_index.py --apply (is memory-index.timer alive?)"',
+          '"build_memory_index.py --apply (is the weekly timer alive?)"', "stale message, generic")
+    o.resub(r'    _os = os\.environ\.get\("MEMORY_OS", "[\w-]+"\)\n'
+            r'    idx_db = Path\.home\(\) / "\.cache" / f"\{_os\}-memory" / "index\.db"\n',
+            "    idx_db = cfg.db_path()\n", "index path -> config")
+    o.sub("                if now - f.stat().st_mtime < 600:\n",
+          "                if now - f.stat().st_mtime < cfg.INDEX_SYNC_GRACE_S:\n", "sync grace -> config")
+    o.resub(r"    # the healthy-neighbour pattern one layer down \(P1-main, 2026-09-03; the\n"
+            r"    # evidence was a memory written minutes earlier, pre-sync\)\. memory_sync runs\n",
+            "    # the same failure one layer down (found in the field the day the page went\n"
+            "    # derived: a memory on disk, not yet indexed). memory_sync runs\n",
+            "field note, generic")
+
     o.forbid(ABSOLUTE_PATHS, "absolute instance paths must be gone")
 
 
@@ -786,6 +806,13 @@ ORGANS = {
     "metabolism_stats.py":   ("hooks/metabolism_stats.py", t_metabolism),
     "recall_stats.py":       ("hooks/recall_stats.py", t_recall_stats),
 }
+
+# Ported by hand from private originals (paths and thresholds moved to
+# config.py, instance notes removed), then left alone: the build does not
+# regenerate them, the leak check covers them like everything else.
+HAND_PORTED = [
+    "hooks/build_memory_index.py", "hooks/memory_archive.py",
+]
 
 HAND_WRITTEN = [
     "hooks/config.py", "README.md", "INSTALL.md", "LICENSE", "index.html",
@@ -1023,7 +1050,7 @@ def main() -> int:
         out.chmod(0o755)
         print(f"[build] {'bin/checkpoint.py':38} {len(organ.applied)} transforms")
 
-    missing = [p for p in HAND_WRITTEN if not (HERE / p).exists()]
+    missing = [p for p in HAND_WRITTEN + HAND_PORTED if not (HERE / p).exists()]
     if missing:
         return _fail("hand-written files missing from the tree: " + ", ".join(missing))
 

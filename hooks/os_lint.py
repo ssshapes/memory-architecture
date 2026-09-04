@@ -108,12 +108,60 @@ def main() -> int:
     if memory_md.exists():
         idx_text = memory_md.read_text(encoding="utf-8")
         linked = set(MDLINK_RE.findall(idx_text))
+        # Derived-index format (2026-09-03): dense '- name — hook' lines, plus a
+        # below-the-fold trailer of bare names. Both count as indexed.
+        linked |= {f"{n}.md" for n in re.findall(r"^- ([\w-]+) —", idx_text, flags=re.M)}
+        k = idx_text.find("*Retrievable by recall")
+        if k != -1:  # the trailer wraps across lines; everything after it is names
+            linked |= {f"{n}.md" for n in re.findall(r"[\w-]+", idx_text[k:].split("*", 2)[-1])}
+
         for t in sorted(linked):
             if not (mem / t).exists():
                 issues.append(f"MEMORY.md indexes a missing file: {t}")
-        for f in mem_files:
-            if f.name != "MEMORY.md" and f.name not in linked:
-                issues.append(f"memory file not indexed in MEMORY.md: {f.name}")
+        # Under a DERIVED index (2026-09-03), "not in MEMORY.md" is a legitimate
+        # state: the generator fills a byte budget and the recall hook serves
+        # everything else. The drift this direction caught — a memory written
+        # by hand and never indexed — cannot happen any more; what CAN fail is
+        # the generator not running. Derived + fresh → skip; derived + stale →
+        # one actionable issue; hand-maintained index → the original check.
+        import time as _time
+        if idx_text.lstrip().startswith("*DERIVED VIEW"):
+            age_d = (_time.time() - memory_md.stat().st_mtime) / 86400
+            if age_d > cfg.INDEX_STALE_DAYS:
+                issues.append(f"MEMORY.md is a derived view but {age_d:.0f} days stale — run "
+                              "build_memory_index.py --apply (is the weekly timer alive?)")
+        else:
+            for f in mem_files:
+                if f.name != "MEMORY.md" and f.name not in linked:
+                    issues.append(f"memory file not indexed in MEMORY.md: {f.name}")
+
+    # ---- 2b. recall-index coverage (the layer that now carries reachability) --
+    # With a derived, capped MEMORY.md, "every memory is reachable" rests on the
+    # recall hook's index.db, not on the index file. A memory on disk that never
+    # landed in index.db is invisible to every session while lint says clean —
+    # the same failure one layer down (found in the field the day the page went
+    # derived: a memory on disk, not yet indexed). memory_sync runs
+    # BEFORE this lint in the SessionStart chain, so a gap here means sync
+    # failed or fell open — except a file written in the last 10 minutes,
+    # which may simply be racing the start. stdlib sqlite only: this script
+    # runs under system python, and memory_lib pulls sqlite-vec at import.
+    import sqlite3 as _sqlite3, time as _time
+    idx_db = cfg.db_path()
+    if not idx_db.is_file():
+        issues.append("recall index missing: %s — memory_recall will fail open and NOTHING is retrievable" % idx_db)
+    else:
+        try:
+            _db = _sqlite3.connect(str(idx_db))
+            indexed = {Path(r[0]).name for r in _db.execute("select path from docs where kind='memory'")}
+            now = _time.time()
+            for f in sorted(mem_files):
+                if f.name == "MEMORY.md" or f.name in indexed:
+                    continue
+                if now - f.stat().st_mtime < cfg.INDEX_SYNC_GRACE_S:
+                    continue  # just written; sync races the session start
+                issues.append(f"memory on disk but ABSENT from the recall index (sync stale or failed): {f.name}")
+        except Exception as e:  # noqa: BLE001
+            issues.append(f"recall index unreadable ({e.__class__.__name__}) — retrieval may be failing open")
 
     # ---- 3. CLAUDE.md reference existence ----------------------------------
     for cm in repo_files:
@@ -136,7 +184,19 @@ def main() -> int:
             ):
                 continue
             name = ref.split("/")[-1]
-            if (folder / ref).exists() or (repo / ref).exists() or name in basenames_under:
+            # Resolution attempts, in order: the CLAUDE.md's own folder, the repo root,
+            # basename-match within this folder's subtree, and — added 2026-08-20 — the
+            # folder's PARENT. That last one is the wiki's own convention: a note in
+            # knowledge/wiki/ writes `raw/foo.md` meaning knowledge/raw/foo.md, a sibling
+            # directory. Without it every correctly-written sibling ref was a false positive
+            # (caught on raw/damodaran-industry-roic-wacc-2026-01.md, which existed all along).
+            parent_ok = False
+            try:
+                cand = (folder.parent / ref)
+                parent_ok = folder.parent.is_relative_to(repo) and cand.exists()
+            except Exception:
+                parent_ok = False
+            if (folder / ref).exists() or (repo / ref).exists() or name in basenames_under or parent_ok:
                 continue
             # ".." references: resolve relative to folder
             try:
