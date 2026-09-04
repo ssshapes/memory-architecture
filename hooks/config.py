@@ -253,7 +253,7 @@ SLOP_PATTERNS = (
 )
 
 # Directories never walked by the lint or the corpus scan.
-SKIP_DIRS = {".git", ".claude", "node_modules", "__pycache__", "scratch", "_archived"}
+SKIP_DIRS = {".git", ".claude", "node_modules", "__pycache__", "scratch", "_archived", "logs"}
 
 
 # -------------------------------------------------------------- metabolism ----
