@@ -37,6 +37,8 @@ code { font-family:ui-monospace,Consolas,monospace; font-size:.85em; background:
 /* ---- the schematic ---- */
 figure.schematic { margin:20px 0 6px; }
 figure.schematic svg { width:100%; height:auto; display:block; }
+/* phones: a schematic scaled to 390px is a thumbnail — let it keep a readable width and pan */
+@media (max-width:640px) { figure.schematic { overflow-x:auto; -webkit-overflow-scrolling:touch; } figure.schematic svg { min-width:720px; } figure.schematic figcaption { position:sticky; left:0; } }
 figcaption { font-size:12px; color:var(--faint); margin-top:10px; max-width:70ch; }
 .svg-label { font-family:var(--sans); font-weight:700; font-size:11px; letter-spacing:.09em; text-transform:uppercase; }
 .svg-title { font-family:var(--sans); font-weight:700; font-size:14.5px; letter-spacing:-.01em; }
@@ -174,20 +176,20 @@ svg a:hover .svg-title, svg a:focus .svg-title { fill:var(--accent); }
 <header class="doc">
   <h1>Memory architecture</h1>
   <p class="dek">The personal OS is a memory prosthesis for a frontier model. The model arrives brilliant and amnesiac: trained on everything in general, knowing nothing about this life in particular — and the particulars change daily. Every organ below exists to close that gap without ever guessing a fact, losing a day silently, or believing something it can't source. What follows is one running instance of a portable pattern — the specifics are examples; the architecture is the point.</p>
-  <div class="meta"><span style="color:var(--ink)">Thomas Simon</span> · <a href="mailto:thomasjsimon@gmail.com" style="color:var(--faint);text-decoration:none">thomasjsimon@gmail.com</a> · personal OS · how it remembers · rewritten <b>2026-07-15</b> · stores expanded <b>2026-07-28</b> · living document, regenerate when the wiring changes</div>
+  <div class="meta"><a href="https://thomassimondesign.com" style="color:var(--ink);text-decoration:none;border-bottom:1px solid var(--accent)">Thomas Simon</a> · <a href="mailto:thomasjsimon@gmail.com" style="color:var(--faint);text-decoration:none">thomasjsimon@gmail.com</a> · personal OS · how it remembers · rewritten <b>2026-07-15</b> · stores expanded <b>2026-07-28</b> · index derived <b>2026-09-03</b> · living document, regenerate when the wiring changes</div>
 </header>
 
 <section>
 <h2>The circulation — one prompt, end to end</h2>
 <figure class="schematic" id="circulation">
-<svg viewBox="0 0 880 560" role="img" aria-label="Schematic of the OS memory circulation: stores feed the context window through the recall hook; writes pass a validator gate; session end feeds episodic capture, which consolidation returns to the semantic store.">
+<svg viewBox="0 0 880 560" role="img" aria-label="Schematic of the OS memory circulation: stores feed the context window through the recall hook; writes pass a validator gate; session end feeds episodic capture, which consolidation returns to the semantic store; the always-loaded page is derived from the semantic store, ranked by how often recall actually used each memory.">
   <!-- STORES (left column) -->
   <g>
     <text x="20" y="30" class="svg-label" fill="#a6a6a6">The stores · long-term</text>
     <a href="#store-semantic" aria-label="Semantic memory — details below">
     <rect x="20" y="44" width="230" height="66" fill="none" stroke="#0a0a0a" stroke-width="1.5"/>
     <text x="34" y="70" class="svg-title">Semantic memory</text>
-    <text x="34" y="88" class="svg-small" fill="#5f5f5f">176 typed files + MEMORY.md index</text>
+    <text x="34" y="88" class="svg-small" fill="#5f5f5f">225 typed files · each with a one-line hook</text>
     </a>
     <a href="#store-episodic" aria-label="Episodic memory — details below">
     <rect x="20" y="122" width="230" height="66" fill="none" stroke="#0a0a0a" stroke-width="1.5"/>
@@ -204,10 +206,17 @@ svg a:hover .svg-title, svg a:focus .svg-title { fill:var(--accent); }
     <rect x="20" y="286" width="230" height="60" fill="#0a0a0a" stroke="#0a0a0a" stroke-width="1.5"/>
     <text x="34" y="308" class="svg-title" fill="#ffffff">index.db</text>
     <text x="34" y="324" class="svg-small" fill="#a6a6a6">FTS5 + vector search over all stores</text>
-    <text x="34" y="338" class="svg-small" fill="#a6a6a6">rebuilt every session start</text>
+    <text x="34" y="338" class="svg-small" fill="#a6a6a6">rebuilt every session start · every hit counted</text>
     </a>
     <text x="20" y="368" class="svg-small" fill="#5f5f5f">recall, every prompt: hybrid keyword + semantic</text>
     <text x="20" y="382" class="svg-small" fill="#5f5f5f">search, rank-fused, wikilink-expanded</text>
+  </g>
+
+  <!-- DERIVE: the always-loaded page is a view over the semantic store, ranked by use -->
+  <g>
+    <path d="M 250 62 L 404 62" fill="none" stroke="#bd4b2a" stroke-width="1.5" stroke-dasharray="3 3"/>
+    <path d="M 404 62 l -9 -5 v 10 z" fill="#bd4b2a"/>
+    <text x="262" y="55" class="svg-label svg-red" font-size="9.5">derive · weekly</text>
   </g>
 
   <!-- CONSOLIDATE: tight loop, episodic -> semantic -->
@@ -229,7 +238,7 @@ svg a:hover .svg-title, svg a:focus .svg-title { fill:var(--accent); }
     <text x="404" y="30" class="svg-label" fill="#a6a6a6">Always loaded</text>
     <rect x="404" y="44" width="240" height="52" fill="none" stroke="#0a0a0a" stroke-width="1.5" stroke-dasharray="4 3"/>
     <text x="418" y="66" class="svg-small">CLAUDE.md routing · rules (voice, stance)</text>
-    <text x="418" y="82" class="svg-small">MEMORY.md hot working set</text>
+    <text x="418" y="82" class="svg-small">MEMORY.md — a page derived from use, 17 KB</text>
     <path d="M 524 96 L 524 122" fill="none" stroke="#0a0a0a" stroke-width="1.5"/>
     <path d="M 524 122 l -5 -9 h 10 z" fill="#0a0a0a"/>
   </g>
@@ -279,13 +288,15 @@ svg a:hover .svg-title, svg a:focus .svg-title { fill:var(--accent); }
     <text x="20" y="470" class="svg-label svg-red">consolidate · the sleep cycle</text>
     <text x="20" y="488" class="svg-small" fill="#5f5f5f">on demand: distills episodic cards into durable semantic memories,</text>
     <text x="20" y="502" class="svg-small" fill="#5f5f5f">proposes merges + retirements — never writes without approval</text>
+    <text x="20" y="516" class="svg-small" fill="#5f5f5f">then regenerates the page; retirements go through the archive tool</text>
   </g>
 
   <!-- lint note bottom right -->
   <g>
     <text x="604" y="470" class="svg-label" fill="#a6a6a6">session start</text>
-    <text x="604" y="488" class="svg-small" fill="#5f5f5f">index rebuild + corpus lint: broken links</text>
-    <text x="604" y="502" class="svg-small" fill="#5f5f5f">and index drift surface before work starts</text>
+    <text x="604" y="488" class="svg-small" fill="#5f5f5f">index rebuild · capability probe · lint:</text>
+    <text x="604" y="502" class="svg-small" fill="#5f5f5f">broken links, a stale page, any memory missing</text>
+    <text x="604" y="516" class="svg-small" fill="#5f5f5f">from the recall index — before work starts</text>
   </g>
 
   <!-- circulation pulses: same geometry as the paths below, drawn as traveling signal -->
@@ -297,7 +308,7 @@ svg a:hover .svg-title, svg a:focus .svg-title { fill:var(--accent); }
     <path class="ps1 fdash" pathLength="100" d="M 524 96 L 524 122"/>
   </g>
 </svg>
-<figcaption>One conversational turn — the traveling pulse repeats it: recall in, model out, write through the gate, capture at close, consolidate back.  Solid black: the synchronous path. Red: the two safeguards — recall (what gets in) and the validator gate (what gets written). Dashed: the asynchronous metabolism — capture at death, consolidation on a cadence. Nothing personal ever enters the weights; everything personal is a file with a source. <b>The four store boxes are tappable</b> — each opens in “Inside the stores,” further down the page.</figcaption>
+<figcaption>One conversational turn — the traveling pulse repeats it: recall in, model out, write through the gate, capture at close, consolidate back.  Solid black: the synchronous path. Red: the two safeguards — recall (what gets in) and the validator gate (what gets written). Dashed: the asynchronous metabolism — capture at death, consolidation on a cadence. The thin dotted red line at the top is the newest loop: the always-loaded page is <em>derived</em> from the store, ranked by which memories recall actually used, so the store can grow while the page stays one page (zoomed in below, under “The derived index”). Nothing personal ever enters the weights; everything personal is a file with a source. <b>The four store boxes are tappable</b> — each opens in “Inside the stores,” further down the page.</figcaption>
 <div class="replay" aria-label="A worked example of one prompt moving through the system">
   <div class="rp-head">One prompt, replayed <span>· 12-second loop, synced to the pulses above</span></div>
   <div class="rp b1"><span class="rk">prompt</span>"Marco quoted $1,400 for the boiler — same guy as last winter?"</div>
@@ -348,12 +359,17 @@ svg a:hover .svg-title, svg a:focus .svg-title { fill:var(--accent); }
 
 <div class="store" id="store-semantic">
   <div class="lbl">Semantic memory · atomic facts <a class="up" href="#circulation">&uarr; diagram</a></div>
-  <p>One durable fact per file, 176 of them, in four types: <code>user_</code> (who the principal is — role, constraints, preferences), <code>feedback_</code> (how the model should work with them, always with the why), <code>project_</code> (ongoing threads), <code>reference_</code> (where things live and how they run). Each file carries provenance in its frontmatter — the session it came from — and links sideways with wikilinks. <b>MEMORY.md is the index over them</b>: one pointer line per memory, loaded into every session as the hot working set, byte-capped and gated at write time so it can't silently outgrow what a session actually reads. Cooled memories move to an archive tier: out of the always-loaded index, still fully searchable.</p>
+  <p>One durable fact per file, 225 of them as of 9/3, in four types: <code>user_</code> (who the principal is — role, constraints, preferences), <code>feedback_</code> (how the model should work with them, always with the why), <code>project_</code> (ongoing threads), <code>reference_</code> (where things live and how they run). Each file carries provenance in its frontmatter — the session it came from — plus a one-line <code>hook:</code>, the few words a fresh session needs to recognize it, and links sideways with wikilinks. <b>MEMORY.md is a page derived from those files, not a document anyone edits</b>: a generator rebuilds it weekly and after every consolidation, pinning the feedback memories, then filling the page with whatever recall has actually handed to sessions lately, until a fixed byte budget is hit. A memory that misses today's page isn't lost or archived; it just isn't lit today. Per-prompt recall still finds it, and use earns the line back. Retired memories move to an archive tier with a reason and a pointer to what replaced them: out of the page and the working store, still searchable.</p>
 </div>
 
 <div class="store" id="store-episodic">
   <div class="lbl">Episodic memory · what happened <a class="up" href="#circulation">&uarr; diagram</a></div>
-  <p>One card per conversation, written automatically when a session ends or compacts. The card holds a summary and a list of who and what was mentioned; the full transcript sits alongside it for verification. This is the raw material consolidation distills into semantic memories — and it's gated at write time so routine automation runs (in this instance, a Sunday brief and a daily news scrape) don't fill the store with cron noise. The store remembers days, not machinery.</p>
+  <p>One card per conversation, written automatically when a session ends or compacts. The card holds a summary and a list of who and what was mentioned; the full transcript sits alongside it for verification. This is the raw material consolidation distills into semantic memories — and it's gated at write time so routine automation runs (in this instance, a Sunday brief and a daily news scrape) don't fill the store with cron noise. The store remembers days, not machinery. Known defect, filed 9/1: cards for long sessions run thin on the session's first hour, because the card is written from the summary the harness keeps, and the summary has already compressed the early part. Not yet fixed.</p>
+</div>
+
+<div class="store" id="store-agent">
+  <div class="lbl">Agent memory · the foreman's notebook <a class="up" href="#circulation">&uarr; diagram</a></div>
+  <p>A second, smaller memory directory that belongs to one agent instead of the whole OS. The foreman is a subagent that runs the twice-daily fleet health pass (restart a wedged channel, close a finished seat, note an aged approval), and it keeps its own persistent notes in <code>.claude/agent-memory/foreman/</code>, separate from the stores above. The reason is scope: a janitor should remember what it did last time without its housekeeping notes surfacing in the principal's sessions as memories about their life. Same file-and-index shape, one level down.</p>
 </div>
 
 <div class="store" id="store-corpus">
@@ -381,7 +397,7 @@ svg a:hover .svg-title, svg a:focus .svg-title { fill:var(--accent); }
 
 <div class="store" id="store-index" style="border-bottom:none">
   <div class="lbl">index.db · the search layer <a class="up" href="#circulation">&uarr; diagram</a></div>
-  <p>Not a store of beliefs — a derived lookup over all three stores above. Rebuilt from scratch at every session start, so it can never drift far from the files; queried by the recall hook on every single prompt with hybrid search (FTS5 keyword + vector similarity, rank-fused), then expanded one hop along wikilinks so a hit drags in its neighbors. The files are the truth; index.db is how a two-second lookup finds them.</p>
+  <p>Not a store of beliefs — a derived lookup over all three stores above. Rebuilt from scratch at every session start, so it can never drift far from the files; queried by the recall hook on every single prompt with hybrid search (FTS5 keyword + vector similarity, rank-fused), then expanded one hop along wikilinks so a hit drags in its neighbors. The files are the truth; index.db is how a two-second lookup finds them. Two things changed on 9/3. Every hit it returns is now counted in a recall log, and that count is the usage signal the always-loaded page is ranked by. And because that page is now allowed to omit things by design, <b>this index is the layer that carries the guarantee that every memory is reachable</b>: lint checks at every session start that every memory file on disk is in it.</p>
 </div>
 </section>
 
@@ -399,8 +415,8 @@ svg a:hover .svg-title, svg a:focus .svg-title { fill:var(--accent); }
   <rect x="20" y="90" width="250" height="200" fill="none" stroke="#0a0a0a" stroke-width="1.5"/>
   <text x="34" y="116" class="svg-title">Birth</text>
   <text x="34" y="134" class="svg-small" fill="#a6a6a6">session-start hooks, automatic</text>
-  <text x="34" y="156" class="svg-small" fill="#5f5f5f">index rebuilt + corpus linted</text>
-  <text x="34" y="171" class="svg-tool">memory_sync.py · os_lint.py</text>
+  <text x="34" y="156" class="svg-small" fill="#5f5f5f">index rebuilt · tools probed · corpus linted</text>
+  <text x="34" y="171" class="svg-tool">memory_sync · capability_probe · os_lint</text>
   <text x="34" y="193" class="svg-small" fill="#5f5f5f">doctrine + hot index load</text>
   <text x="34" y="208" class="svg-tool">CLAUDE.md · rules/ · MEMORY.md</text>
   <text x="34" y="230" class="svg-small" fill="#5f5f5f">a spinoff child reads its staged brief</text>
@@ -519,15 +535,20 @@ svg a:hover .svg-title, svg a:focus .svg-title { fill:var(--accent); }
 <thead><tr><th>Organ</th><th>Fires</th><th>Problem it solves</th><th>Analog</th></tr></thead>
 <tbody>
 <tr><td class="organ">Recall hook<span class="sub">memory_recall.py</span></td><td class="when">every prompt</td><td>The window can't hold everything, so relevance is computed per-prompt: hybrid keyword + vector search over all stores, rank-fused, wikilink-expanded. Retrieval instead of residence — the answer to "the last 48 hours should be available" without carrying 48 hours of raw context.</td><td class="brain">association cortex</td></tr>
-<tr><td class="organ">Semantic store<span class="sub">176 memory files + MEMORY.md</span></td><td class="when">index always; files on recall</td><td>Durable typed facts (who, how-to-work, projects, references), one file per belief, provenance in frontmatter. The index is a bounded hot working set — a cache with admission rules, not a document that grows until it silently overflows.</td><td class="brain">long-term memory</td></tr>
+<tr><td class="organ">Semantic store<span class="sub">225 memory files + derived MEMORY.md</span></td><td class="when">page always; files on recall</td><td>Durable typed facts (who, how-to-work, projects, references), one file per belief, provenance and a one-line hook in frontmatter. The page is a bounded view rebuilt from use — a cache with a ranking rule, not a document that grows until it silently overflows.</td><td class="brain">long-term memory</td></tr>
+<tr><td class="organ">Index generator<span class="sub">build_memory_index.py</span></td><td class="when">Sunday 03:00 · after /consolidate</td><td>The always-loaded page has a hard ceiling and the collection doesn't. The generator pins every feedback memory, ranks the rest by how often recall handed them to a session in the last 30 days (weighted to recent use, plus a bonus per inbound wikilink, plus a floor for anything under a week old), and fills the page to budget. Eviction stops being a decision anyone makes; it's rank.</td><td class="brain">salience — what's lit</td></tr>
+<tr><td class="organ">Recall log<span class="sub">recall_log.db</span></td><td class="when">every prompt</td><td>"Is this memory used?" was a feeling; now it's a count. Every hit the recall hook returns is logged (14,100 since 7/31). The generator reads it; nothing else does. Use it or lose the line.</td><td class="brain">synaptic strength</td></tr>
+<tr><td class="organ">Archive + supersession<span class="sub">memory_archive.py</span></td><td class="when">on retirement</td><td>A corrected fact overwritten in place loses the trail. Retiring a memory is a tool call that stamps why (merged, superseded, evicted, wrong) and what replaced it, so the archive can answer "what did I use to believe, and what replaced it?" Never moved by hand.</td><td class="brain">reconsolidation</td></tr>
 <tr><td class="organ">Episodic capture<span class="sub">memory_episodic.py</span></td><td class="when">session end · pre-compact · forced by /save-clear</td><td>Weights can't take one-shot events; sessions die. Each conversation becomes a retrievable card so no day evaporates. The forced path exists because bare <code>/clear</code> fires no hooks — discovered the hard way.</td><td class="brain">hippocampus</td></tr>
 <tr><td class="organ">Provenance validator<span class="sub">validate_os_memory.py + ledger</span></td><td class="when">every memory write</td><td>A false belief written today is retrieved as truth forever. The gate blocks fabricated citations at write time and ledgers every write — the immune system that makes the store trustworthy enough to act on.</td><td class="brain">immune system</td></tr>
 <tr><td class="organ">Consolidation<span class="sub">/consolidate</span></td><td class="when">on demand, propose-only</td><td>Episodic cards pile up; duplicates and dead facts accrete. Distills sessions into semantic memories, proposes merges and retirements. Judgment stays human — it proposes, never autowrites.</td><td class="brain">sleep</td></tr>
-<tr><td class="organ">Index sync + lint<span class="sub">memory_sync.py · os_lint.py</span></td><td class="when">session start</td><td>Search is only as good as its index; the corpus drifts as many sessions write in parallel. Rebuilds index.db, checks wikilinks and index integrity, reports drift before it compounds. Quiet when clean.</td><td class="brain">glymphatic housekeeping</td></tr>
+<tr><td class="organ">Index sync + lint<span class="sub">memory_sync.py · os_lint.py</span></td><td class="when">session start</td><td>Search is only as good as its index; the corpus drifts as many sessions write in parallel. Rebuilds index.db, checks wikilinks, flags a page more than eight days stale, and — now that the page may omit things by design — checks the layer that actually carries reachability: every memory on disk must be in the recall index. Quiet when clean.</td><td class="brain">glymphatic housekeeping</td></tr>
+<tr><td class="organ">Capability probe<span class="sub">capability_probe.py</span></td><td class="when">session start</td><td>A tool that's silently absent (a wedged calendar server, a dead meeting-notes bridge) makes a session do by hand what it believes it can't do at all, or quietly skip it. The probe pings each capability and prints only when one is down.</td><td class="brain">proprioception</td></tr>
 <tr><td class="organ">Session lifecycle<span class="sub">/save-clear · /save-kill · spinoff briefs</span></td><td class="when">at thread seams</td><td>Context degrades as it fills, so sessions are cleared at seams between threads — but only after a defined save-all sweep. Controlled forgetting: the window stays sharp because the stores are trusted to remember.</td><td class="brain">forgetting, on purpose</td></tr>
 <tr><td class="organ">Rules + routing<span class="sub">CLAUDE.md · soul/stance/anti-patterns</span></td><td class="when">always loaded</td><td>Voice, honesty-over-agreement, and named failure modes survive every context reset because they're files, not vibes. The routing layer sends each topic to its domain index instead of loading everything.</td><td class="brain">prefrontal constraint</td></tr>
 <tr><td class="organ">Skills + commands<span class="sub">dispatch rules with trigger surfaces</span></td><td class="when">on trigger match</td><td>Procedures the system should perform the same way every time (frame-checks, closures, publishing routes). The description is the trigger; the when-clause matters more than the procedure.</td><td class="brain">procedural memory</td></tr>
 <tr><td class="organ">Routines<span class="sub">systemd timers → claude -p wrappers</span></td><td class="when">on the clock (below)</td><td>Work that must happen without anyone thinking of it. All local on one always-on box; every wrapper verifies a confirmation token in the output because exit codes lie.</td><td class="brain">autonomic system</td></tr>
+<tr><td class="organ">Foreman<span class="sub">a subagent with its own memory · P8 channel</span></td><td class="when">08:00 · 20:30</td><td>The fleet needs a janitor that remembers what it did last time. A dedicated agent with a persistent notebook (the agent-memory store above), a heartbeat timer that wakes it in its own channel, and a quota governor that skips the pass when the week's budget is nearly spent. Janitorial only: restarts, closeouts, aged approvals. Never touches in-flight work, never contacts a human.</td><td class="brain">night shift</td></tr>
 <tr><td class="organ">The board<span class="sub">dashboard, regenerated per page load</span></td><td class="when">continuous</td><td>The read surface: Focus, queues, rot made visible. Renders the files, never owns data; checkboxes stage intent for a session to route with judgment. What the system knows, made glanceable.</td><td class="brain">the face</td></tr>
 </tbody>
 </table>
@@ -539,7 +560,9 @@ svg a:hover .svg-title, svg a:focus .svg-title { fill:var(--accent); }
 <div class="clock">
   <div class="row"><span class="t">daily, pre-wake</span><span class="what">dashboard regenerate — the board is fresh before anyone looks at it <span>· systemd</span></span></div>
   <div class="row"><span class="t">weekly, sunday</span><span class="what">the weekly brief — week shape assembled from OS files + calendars, delivered by email <span>· cron</span></span></div>
-  <div class="row"><span class="t">per event</span><span class="what">hooks — recall (each prompt) · validator (each memory write) · sync + lint (session start) · episodic capture (session end/compact) <span>· Claude Code</span></span></div>
+  <div class="row"><span class="t">weekly, sun 03:00</span><span class="what">index regenerate — the always-loaded page rebuilt from the recall log, both stores <span>· systemd</span></span></div>
+  <div class="row"><span class="t">twice daily</span><span class="what">foreman heartbeat 08:00 and 20:30 — fleet health pass in its own channel, skipped when quota is tight <span>· systemd</span></span></div>
+  <div class="row"><span class="t">per event</span><span class="what">hooks — recall + recall log (each prompt) · validator (each memory write) · sync + probe + lint (session start) · episodic capture (session end/compact) <span>· Claude Code</span></span></div>
 </div>
 <p style="margin-top:14px">Other timers come and go with the work — a news scrape, a digest, a weekly evaluation batch — and every one has the same shape: a timer, a headless <code>claude -p</code> wrapper, and a confirmation token verified in the output, because exit codes lie. Everything runs on one always-on machine. Cloud scheduling was tried and retired: local means direct file access, one scheduler, one place to look when something misfires.</p>
 </section>
@@ -564,7 +587,7 @@ svg a:hover .svg-title, svg a:focus .svg-title { fill:var(--accent); }
 <tr><td class="organ">index.db</td><td>SQLite (D. Richard Hipp, 2000) and its FTS5 full-text engine with BM25 relevance ranking (Robertson &amp; Spärck Jones lineage)</td><td>One derived file over all stores, rebuilt from the truth at every session start — disposable by design, so it can never be wrong for long.</td></tr>
 <tr><td class="organ">Typed memory files<br>+ recall hook</td><td>The agent-memory wave: MemGPT/Letta, Mem0, Zep's Graphiti (2023–25) — surveyed before building</td><td>Same goals, different bet: plain markdown files and a grepable store instead of a hosted memory database, so the human can read, correct, and delete what the model believes.</td></tr>
 <tr><td class="organ">The wiki</td><td>Ward Cunningham's WikiWikiWeb (1995) for the form; Luhmann's Zettelkasten — via Ahrens, <em>How to Take Smart Notes</em> (2017) — for the pipeline; Obsidian's <code>[[wikilink]]</code> convention for the graph; Karpathy's <em>llm-wiki</em> idea file (2026) for the operating model — the LLM maintains the wiki, the human curates sources</td><td>Sources land in <code>raw/</code>, synthesis lives in <code>wiki/</code> (Luhmann's literature notes vs permanent notes, verbatim); the links double as retrieval expansion.</td></tr>
-<tr><td class="organ">The hot index</td><td>Cache design — a small, admission-controlled fast layer over a large slow store; Claude Code's memory-file convention</td><td>MEMORY.md is a byte-capped cache of pointers with a write-time gate, not a document that grows.</td></tr>
+<tr><td class="organ">The hot index</td><td>Cache design — a small, admission-controlled fast layer over a large slow store; Claude Code's memory-file convention</td><td>MEMORY.md is a byte-capped page of pointers, since 9/3 derived from measured use — the write-time gate became a generator.</td></tr>
 <tr><td class="organ">No unsourced beliefs</td><td>Scholarly citation discipline; data lineage from data engineering</td><td>Enforced by a hook at write time, not caught by review after — a fabricated citation never lands.</td></tr>
 <tr><td class="organ">The metabolism</td><td>Memory back-pressure from agent-memory research (the Hermes agent study, 2026); the AI Maker second-brain post (2026) for resurfacing; GTD's weekly review for the cadence</td><td>Overflow pressure <em>prompts</em> consolidation instead of forcing it; proposals only, never autowrites.</td></tr>
 </tbody>
@@ -585,6 +608,152 @@ svg a:hover .svg-title, svg a:focus .svg-title { fill:var(--accent); }
 </div>
 </section>
 
+<section id="derived-index">
+<h2>The derived index — decided 8/17, built 9/3</h2>
+<p class="lead">The always-loaded page used to be written by hand, one line per memory, and on 8/16 it hit its ceiling: after four rounds of squeezing the handwriting, the page physically couldn't hold another name. Since 9/3 nobody writes it. A small program does, from the files, every Sunday night and after every consolidation.</p>
+<p><b>In plain terms.</b> Each memory file now carries a <code>hook:</code> in its header, the few words a fresh session needs in order to recognize it ("recursion IS the spec", "/doc?f= repo-relative auto-links"). The generator collects those hooks. It pins every <em>feedback</em> memory first, because those are the rules for how to work with the principal and have to be present whether or not they were used this month. Then it ranks everything else by how often recall actually handed it to a session in the last thirty days, weighted toward recent use, with a bonus for every other memory that links to it and a floor for anything under a week old, so a newborn gets a chance to be used before it's judged. It writes lines in that order until the page hits its byte budget, then stops. The names that didn't fit go in a one-line trailer at the bottom, so a session at least knows they exist and can go look.</p>
+<p><b>What this changes for the operator.</b> "Nothing to archive" is now the normal state, not a problem. The page can't outgrow itself, so archiving is only for memories that are wrong or superseded, never for space. To make a line better, edit that memory's hook, not the page; the next regeneration carries it. A memory that falls off the page isn't gone, it's cooled: per-prompt recall still finds it, and if it gets used again it earns the line back on its own. The page header says <em>derived view, do not hand-edit</em>, so no session tries.</p>
+<p><b>Where the safety net went.</b> When the page was the whole guarantee, a memory missing from it was the failure to watch for, and lint watched for exactly that. Now the page is allowed to omit things by design, so that check means nothing. The guarantee moved down a layer: every memory on disk must be in the recall index, because that is what finds the cooled ones. Lint checks it at every session start, after sync has run, with a ten-minute grace for a file written seconds before the start. A peer session found this gap the same morning the page went derived, using the memory that <em>describes</em> the derived page as its evidence: on disk, not yet indexed. First the build loop, then the life of one memory, then the three paths a session has to any memory and who guarantees each.</p>
+
+<figure class="schematic" id="build-loop">
+<svg viewBox="0 0 880 400" role="img" aria-label="How the always-loaded page is built: memory files, wikilinks and the recall log feed a generator that pins feedback memories, scores the rest by use, and fills MEMORY.md to a fixed byte budget; sessions then use the page and recall keeps counting.">
+  <text x="20" y="30" class="svg-label" fill="#a6a6a6">Inputs · all already on disk</text>
+  <rect x="20" y="44" width="230" height="66" fill="none" stroke="#0a0a0a" stroke-width="1.5"/>
+  <text x="34" y="70" class="svg-title">Memory files</text>
+  <text x="34" y="88" class="svg-small" fill="#5f5f5f">225 · each with a one-line hook: in its header</text>
+  <rect x="20" y="122" width="230" height="66" fill="none" stroke="#0a0a0a" stroke-width="1.5"/>
+  <text x="34" y="148" class="svg-title">Wikilinks</text>
+  <text x="34" y="166" class="svg-small" fill="#5f5f5f">inbound links · other memories vouching for it</text>
+  <rect x="20" y="200" width="230" height="66" fill="#0a0a0a" stroke="#0a0a0a" stroke-width="1.5"/>
+  <text x="34" y="226" class="svg-title" fill="#ffffff">Recall log</text>
+  <text x="34" y="244" class="svg-small" fill="#a6a6a6">every hit counted · 14,100 since 7/31</text>
+  <!-- bus into the generator -->
+  <path d="M 250 77 L 300 77 M 250 155 L 300 155 M 250 233 L 300 233 M 300 77 L 300 233" fill="none" stroke="#0a0a0a" stroke-width="1.5"/>
+  <path d="M 300 155 L 330 155" fill="none" stroke="#0a0a0a" stroke-width="2"/>
+  <path d="M 330 155 l -9 -5 v 10 z" fill="#0a0a0a"/>
+  <!-- generator -->
+  <text x="330" y="30" class="svg-label" fill="#a6a6a6">The generator</text>
+  <rect x="330" y="90" width="260" height="130" fill="none" stroke="#0a0a0a" stroke-width="3"/>
+  <text x="344" y="116" class="svg-title">Rank and fill</text>
+  <text x="344" y="132" class="svg-tool">build_memory_index.py</text>
+  <text x="344" y="154" class="svg-small" fill="#5f5f5f">1 · pin every feedback memory (68)</text>
+  <text x="344" y="169" class="svg-small" fill="#5f5f5f">2 · score the rest: hits in 30 days × recency</text>
+  <text x="344" y="184" class="svg-small" fill="#5f5f5f">&#160;&#160;&#160;&#160;+ 5 per inbound link · newborn floor, 7 days</text>
+  <text x="344" y="199" class="svg-small" fill="#5f5f5f">3 · fill to 17 KB, best first, then stop</text>
+  <path d="M 590 155 L 640 155" fill="none" stroke="#0a0a0a" stroke-width="2"/>
+  <path d="M 640 155 l -9 -5 v 10 z" fill="#0a0a0a"/>
+  <!-- output page -->
+  <text x="640" y="30" class="svg-label" fill="#a6a6a6">Output · loaded everywhere</text>
+  <rect x="640" y="90" width="220" height="130" fill="none" stroke="#0a0a0a" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="654" y="116" class="svg-title">MEMORY.md</text>
+  <text x="654" y="132" class="svg-small" fill="#a6a6a6">the derived page</text>
+  <text x="654" y="154" class="svg-small" fill="#5f5f5f">177 lines · 16.1 of 17 KB</text>
+  <text x="654" y="169" class="svg-small" fill="#5f5f5f">trailer: the names that didn't fit</text>
+  <text x="654" y="184" class="svg-small" fill="#5f5f5f">first line: derived view, do not hand-edit</text>
+  <text x="654" y="204" class="svg-label svg-red" font-size="10">exactly one page, always</text>
+  <!-- the loop back: sessions use the page, recall keeps counting -->
+  <path d="M 750 220 L 750 320 L 135 320 L 135 266" fill="none" stroke="#bd4b2a" stroke-width="1.5" stroke-dasharray="3 3"/>
+  <path d="M 135 266 l -5 9 h 10 z" fill="#bd4b2a"/>
+  <text x="300" y="312" class="svg-label svg-red" font-size="10">sessions use the page · recall keeps counting · next week's page follows</text>
+  <!-- fires -->
+  <text x="20" y="360" class="svg-label" fill="#a6a6a6">Fires</text>
+  <text x="70" y="360" class="svg-small" fill="#5f5f5f">Sunday 03:00, both stores (systemd) · step 6b of /consolidate · by hand: build_memory_index.py --apply</text>
+  <text x="70" y="376" class="svg-small" fill="#5f5f5f">to change a line: edit the memory's hook: field and regenerate — never the page. The old page is backed up on every apply.</text>
+</svg>
+<figcaption>How the page gets built. Everything on the left already exists for other reasons: the files are the memories, the wikilinks are how they cite each other, the recall log is a side effect of every prompt. The generator adds no new data; it only decides what's lit. The dotted red return is the point of the design: what sessions actually use this month decides next month's page, without anyone deciding.</figcaption>
+</figure>
+
+<figure class="schematic" id="memory-life">
+<svg viewBox="0 0 880 330" role="img" aria-label="The life of one memory: born through the validator gate, indexed at the next session start, in use as recall hands it to sessions, on the page or in the trailer depending on rank, and finally archived with a pointer to what replaced it.">
+  <text x="20" y="30" class="svg-label" fill="#a6a6a6">One memory · birth to retirement · three checks along the way</text>
+  <!-- 1 born -->
+  <rect x="20" y="44" width="150" height="70" fill="none" stroke="#0a0a0a" stroke-width="1.5"/>
+  <text x="34" y="70" class="svg-title">Born</text>
+  <text x="34" y="88" class="svg-small" fill="#5f5f5f">written through the gate</text>
+  <text x="34" y="102" class="svg-small" fill="#5f5f5f">source required, ledgered</text>
+  <text x="20" y="136" class="svg-tool">validate_os_memory.py</text>
+  <text x="20" y="152" class="svg-label svg-red" font-size="9.5">check 1 · the validator</text>
+  <text x="20" y="166" class="svg-small" fill="#a6a6a6">no source, no write</text>
+  <path d="M 170 79 L 196 79" fill="none" stroke="#0a0a0a" stroke-width="2"/>
+  <path d="M 196 79 l -9 -5 v 10 z" fill="#0a0a0a"/>
+  <!-- 2 indexed -->
+  <rect x="196" y="44" width="150" height="70" fill="none" stroke="#0a0a0a" stroke-width="1.5"/>
+  <text x="210" y="70" class="svg-title">Indexed</text>
+  <text x="210" y="88" class="svg-small" fill="#5f5f5f">at the next session start</text>
+  <text x="210" y="102" class="svg-small" fill="#5f5f5f">into index.db, keyword + vector</text>
+  <text x="196" y="136" class="svg-tool">memory_sync.py</text>
+  <text x="196" y="152" class="svg-label svg-red" font-size="9.5">check 2 · lint</text>
+  <text x="196" y="166" class="svg-small" fill="#a6a6a6">on disk ⇒ in the index, or flagged</text>
+  <path d="M 346 79 L 372 79" fill="none" stroke="#0a0a0a" stroke-width="2"/>
+  <path d="M 372 79 l -9 -5 v 10 z" fill="#0a0a0a"/>
+  <!-- 3 in use -->
+  <rect x="372" y="44" width="150" height="70" fill="none" stroke="#0a0a0a" stroke-width="1.5"/>
+  <text x="386" y="70" class="svg-title">In use</text>
+  <text x="386" y="88" class="svg-small" fill="#5f5f5f">recall hands it to a session</text>
+  <text x="386" y="102" class="svg-small" fill="#5f5f5f">each hit is counted</text>
+  <text x="372" y="136" class="svg-tool">memory_recall.py</text>
+  <text x="372" y="150" class="svg-tool">→ recall_log.db</text>
+  <text x="372" y="166" class="svg-small" fill="#a6a6a6">the count is the record</text>
+  <path d="M 522 72 L 548 72" fill="none" stroke="#0a0a0a" stroke-width="2"/>
+  <path d="M 548 72 l -9 -5 v 10 z" fill="#0a0a0a"/>
+  <!-- 4 on the page / in the trailer -->
+  <rect x="548" y="44" width="150" height="62" fill="none" stroke="#0a0a0a" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="562" y="66" class="svg-title">On the page</text>
+  <text x="562" y="82" class="svg-small" fill="#5f5f5f">rank clears the cut</text>
+  <text x="562" y="96" class="svg-small" fill="#5f5f5f">lit in every session</text>
+  <rect x="548" y="136" width="150" height="62" fill="none" stroke="#0a0a0a" stroke-width="1.5"/>
+  <text x="562" y="158" class="svg-title">In the trailer</text>
+  <text x="562" y="174" class="svg-small" fill="#5f5f5f">cooled, off the page</text>
+  <text x="562" y="188" class="svg-small" fill="#5f5f5f">still recalled per prompt</text>
+  <path d="M 600 106 L 600 136" fill="none" stroke="#0a0a0a" stroke-width="1.5"/>
+  <path d="M 600 136 l -5 -9 h 10 z" fill="#0a0a0a"/>
+  <path d="M 646 136 L 646 106" fill="none" stroke="#0a0a0a" stroke-width="1.5"/>
+  <path d="M 646 106 l -5 9 h 10 z" fill="#0a0a0a"/>
+  <text x="606" y="125" class="svg-small" fill="#a6a6a6" font-size="9">cools</text>
+  <text x="652" y="125" class="svg-small" fill="#a6a6a6" font-size="9">earns it back</text>
+  <text x="548" y="222" class="svg-tool">build_memory_index.py</text>
+  <text x="548" y="238" class="svg-label svg-red" font-size="9.5">check 3 · the budget, weekly</text>
+  <text x="548" y="252" class="svg-small" fill="#a6a6a6">rank, not a decision</text>
+  <path d="M 698 72 L 724 72" fill="none" stroke="#0a0a0a" stroke-width="2"/>
+  <path d="M 724 72 l -9 -5 v 10 z" fill="#0a0a0a"/>
+  <path d="M 698 167 L 711 167 L 711 72" fill="none" stroke="#0a0a0a" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <!-- 5 archived -->
+  <rect x="724" y="44" width="150" height="70" fill="#0a0a0a" stroke="#0a0a0a" stroke-width="1.5"/>
+  <text x="738" y="70" class="svg-title" fill="#ffffff">Archived</text>
+  <text x="738" y="88" class="svg-small" fill="#a6a6a6">retired with a reason: wrong,</text>
+  <text x="738" y="102" class="svg-small" fill="#a6a6a6">superseded, merged, evicted</text>
+  <text x="724" y="136" class="svg-tool">memory_archive.py</text>
+  <text x="724" y="152" class="svg-small" fill="#a6a6a6">superseded_by → survivor</text>
+  <text x="724" y="166" class="svg-small" fill="#a6a6a6">still searchable</text>
+  <text x="724" y="180" class="svg-small" fill="#a6a6a6">never moved by hand</text>
+  <!-- bottom line -->
+  <text x="20" y="290" class="svg-label svg-red">three checks, three layers</text>
+  <text x="20" y="308" class="svg-small" fill="#5f5f5f">the validator guards birth · lint guards indexing · the generator's budget guards the page. A memory can be off the page and fully alive;</text>
+  <text x="20" y="322" class="svg-small" fill="#5f5f5f">only "archived" means retired, and even that keeps the file and the trail of what replaced it.</text>
+</svg>
+<figcaption>The life of one memory. The two-way arrow in the fourth column is the new part: before 9/3, leaving the page was a hand decision (a "tidying pass") and coming back was a hand decision too. Now both are rank, recomputed weekly from the count in the third column. Archiving stays deliberate, because it's the only step that changes what the system believes rather than what it has lit.</figcaption>
+</figure>
+
+<h3 style="margin-top:22px">Three paths to any memory, and who guarantees each</h3>
+<p>A session can reach a memory three ways, from cheapest to most deliberate. Each path is bounded differently, and since 9/3 each has a different guarantor. "Functionally unknown" now means all three miss.</p>
+<div class="tblwrap">
+<table style="table-layout:fixed;width:100%">
+<colgroup><col style="width:19%"><col style="width:15%"><col style="width:33%"><col style="width:33%"></colgroup>
+<thead><tr><th style="width:19%">Path</th><th style="width:15%">Fires</th><th style="width:33%">What bounds it</th><th style="width:33%;white-space:normal">Who guarantees it</th></tr></thead>
+<tbody>
+<tr><td class="organ">The page<span class="sub">MEMORY.md, derived</span></td><td class="when">at birth, before any question is asked</td><td>17 KB. Feedback memories pinned; everything else earns its line by use. Recognition, not content: the light goes on, "I know this, go look."</td><td>The generator, because the budget is how the page is built rather than a rule to remember. Lint flags a page more than eight days old.</td></tr>
+<tr><td class="organ">Automatic recall<span class="sub">memory_recall.py over index.db</span></td><td class="when">every prompt</td><td>The top hits for this prompt, keyword and vector rank-fused, expanded one hop along wikilinks. This is what finds the cooled memories the page left off.</td><td>Lint, since 9/3: every memory file on disk must be in the recall index. Sync runs first in the same chain, so a miss here means sync failed, not that it hasn't run yet. Ten-minute grace for a file racing the start.</td></tr>
+<tr><td class="organ">Deliberate search<span class="sub">grep · full-text · the files</span></td><td class="when">when the model goes looking</td><td>Nothing. The files are the truth and they're all there, archive included.</td><td>The alias convention: when something acquires a second name in the wild, it gets written into the memory's body, where literal search can see it. The page never spends its bytes on fuzziness that the file supplies for free.</td></tr>
+</tbody>
+</table>
+</div>
+<div class="clock" style="margin-top:18px">
+  <div class="row"><span class="t">by hand</span><span class="what">preview next week's page without writing it: <code>python3 .claude/hooks/build_memory_index.py</code> → scratch/memory-index-preview.md <span>· dry run</span></span></div>
+  <div class="row"><span class="t">by hand</span><span class="what">regenerate now: the same, with <code>--apply</code> — the old page is backed up to memory/archive/ first <span>· both stores with MEMORY_OS=juniper-os</span></span></div>
+  <div class="row"><span class="t">by hand</span><span class="what">ask what replaced a retired memory, or what an active one replaced: <code>python3 .claude/hooks/memory_archive.py why &lt;name&gt;</code> <span>· the trail</span></span></div>
+</div>
+</section>
+
 <section>
 <h2>Appendix — principles of the index</h2>
 <p style="border-left:none;font-style:italic;color:var(--dim);max-width:66ch;margin:.4em 0 1.2em">"Some things come forth immediately; others must be sought longer, as though dug out of more secret receptacles; others rush out in troops, and while a different thing is asked, they leap into the midst, as if to say, <em>is it perchance I?</em> These I drive away from the face of my remembrance, until what I wish for be unveiled and appear out of its secret place."<br><span style="font-style:normal;font-size:12px;color:var(--faint)">— Augustine, Confessions X — hybrid retrieval, ranked candidates, and a reranker, ca. 400 AD</span></p>
@@ -597,9 +766,9 @@ svg a:hover .svg-title, svg a:focus .svg-title { fill:var(--accent); }
 
 <p><b>Structure by type where machines compute; prose where the model reads.</b> Type-grouping is real compression, implemented one level up: people, companies, and properties live in their own stores with their own indexes; memory filenames carry their type prefix inside the pointer, so the tag rides for free. The general rule: format is cost when read into context, capability when computed over.</p>
 
-<p><b>The compression frontier is selection, not encoding.</b> Past lean hooks, bytes are recovered by consolidation (merge related entries) and eviction (a cold entry's recognition value decays toward zero while its byte cost stays constant). Evicted things stop lighting up automatically but stay fully findable — the file and the search index still hold them. Same deal biological working memory makes.</p>
+<p><b>The compression frontier is selection, not encoding.</b> Past lean hooks, bytes are recovered by consolidation (merge related entries) and eviction (a cold entry's recognition value decays toward zero while its byte cost stays constant). Evicted things stop lighting up automatically but stay fully findable — the file and the search index still hold them. Same deal biological working memory makes. Since 9/3 that decay is measured rather than guessed: a memory's recognition value is its recall count over thirty days, and eviction from the page is the rank falling below the cut, recomputed weekly.</p>
 
-<p><b>Enforced, not remembered.</b> The pointer discipline is a write-time gate in the validator (lines over budget or files near the read ceiling are blocked with fix-it feedback), because an index that silently outgrows its read limit fails invisibly — the bottom of the file simply stops existing to every future session. Deterministic rules go in hooks; judgment goes in reviews.</p>
+<p><b>Enforced, not remembered.</b> The pointer discipline used to be a write-time gate in the validator (lines over budget blocked with fix-it feedback), because an index that silently outgrows its read limit fails invisibly — the bottom of the file simply stops existing to every future session. Since 9/3 it isn't enforced at all, in the sense that there's nothing to enforce: the budget is how the page is generated, and nothing hand-writes it. The rule moved from "block the bad write" to "there is no write." Deterministic rules go in generators and hooks; judgment goes in reviews.</p>
 
 <p><b>A failed grep proves little.</b> Grep is the crudest of three recognition paths (hot index, automatic hybrid recall, deliberate search). A thing is functionally unknown only when all three miss — and the recorded-alias convention exists to make that state rare: when something acquires a second name in the wild, write it down where search can see it.</p>
 </section>
