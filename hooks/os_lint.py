@@ -208,6 +208,7 @@ def main() -> int:
             continue
         folder = cm.parent
         basenames_under = {p.name for p in folder.rglob("*.md")}
+        basenames_repo = {p.name for p in repo_files}
         for line in text.split("\n"):
           # external-file mentions (a path inside someone's GitHub repo etc.) aren't refs
           if "github" in line.casefold():
@@ -219,6 +220,19 @@ def main() -> int:
             ):
                 continue
             name = ref.split("/")[-1]
+            stem = name[:-3] if name.endswith(".md") else name
+            # Known node outside the repo: the memory store's own index is referred to
+            # by its bare name on purpose (an absolute path would be machine-specific).
+            if name == "MEMORY.md":
+                continue
+            # Placeholders in prose about a pattern ("docs/product/platforms/X.md"):
+            # a single-letter or all-caps stem is a template, not a reference.
+            if re.fullmatch(r"[A-Z]|[A-Z]{2,}(?:-[A-Z]+)*", stem):
+                continue
+            # A bare filename that exists anywhere in the repo resolves, the same way
+            # a wikilink resolves by basename (J1-main, 2026-09-04: `decision_log.md`).
+            if "/" not in ref and name in basenames_repo:
+                continue
             # Resolution attempts, in order: the CLAUDE.md's own folder, the repo root,
             # basename-match within this folder's subtree, and — added 2026-08-20 — the
             # folder's PARENT. That last one is the wiki's own convention: a note in
