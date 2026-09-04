@@ -50,8 +50,10 @@ TICKPATH_RE = re.compile(r"`([^`\n]+\.md)`")
 FENCED_RE = re.compile(r"^[ \t]*(`{3,}|~{3,})[^\n]*\n.*?^[ \t]*\1[ \t]*$", re.DOTALL | re.MULTILINE)
 
 # meta-usage wikilinks that are prose about the convention, never targets
-META_LINKS = {"wikilink", "wikilinks", "name", "page-name", "basename", "their-name", "folder/file"}
+META_LINKS = {"wikilink", "wikilinks", "name", "page-name", "node-name", "basename", "their-name",
+              "folder/file", "file", "x", "target", "memory-name"}
 
+# logs/: captured records, not doctrine; never edited to satisfy a linter
 SKIP_DIRS = cfg.SKIP_DIRS
 
 
@@ -82,6 +84,14 @@ def main() -> int:
 
     # ---- stem universe + normalized lookup --------------------------------
     stems: set[str] = {f.stem for f in repo_files} | {f.stem for f in mem_files}
+    # .claude/ is skipped by the corpus walk (hooks, caches), but its rules, docs,
+    # commands and skills are legitimate [[link]] targets by doctrine, so they join
+    # the resolution universe (J1-main, 2026-09-04: [[dashboard-content]] and
+    # [[git-workflow]] are correct links, not near-misses).
+    for sub_dir in ("rules", "docs", "commands", "skills"):
+        d = repo / ".claude" / sub_dir
+        if d.is_dir():
+            stems |= {f.stem for f in d.rglob("*.md")}
     by_norm: dict[str, set[str]] = {}
     for s in stems:
         by_norm.setdefault(_norm(s), set()).add(s)
@@ -94,7 +104,7 @@ def main() -> int:
         except Exception:
             continue
         for m in WIKI_RE.finditer(text):
-            raw = m.group(1).strip()
+            raw = m.group(1).strip().split("|", 1)[0].strip()   # [[target|display]]
             base = raw.split("/")[-1]
             base_noext = base[:-3] if base.endswith(".md") else base
             if base_noext in stems or base_noext in META_LINKS or base_noext.casefold() in META_LINKS:
@@ -111,9 +121,17 @@ def main() -> int:
         # Derived-index format (2026-09-03): dense '- name — hook' lines, plus a
         # below-the-fold trailer of bare names. Both count as indexed.
         linked |= {f"{n}.md" for n in re.findall(r"^- ([\w-]+) —", idx_text, flags=re.M)}
-        k = idx_text.find("*Retrievable by recall")
-        if k != -1:  # the trailer wraps across lines; everything after it is names
-            linked |= {f"{n}.md" for n in re.findall(r"[\w-]+", idx_text[k:].split("*", 2)[-1])}
+        # Trailers list bare names, wrapped across lines, and may END with a prose
+        # sentence ("*… and N more, retrieved per-prompt by the recall hook.*") or be
+        # followed by the expired list. Memory names always carry a type prefix and an
+        # underscore, so match that shape and nothing else (J1-main, 2026-09-04: the old
+        # tokeniser reported and.md, by.md, hook.md, 96.md as missing files).
+        _NAME = r"\b([a-z]+_[\w-]+)\b"
+        for marker in ("*Retrievable by recall", "*Expired, off the page"):
+            k = idx_text.find(marker)
+            if k != -1:
+                tail = idx_text[k:].split("*", 2)[-1].split("*…", 1)[0]
+                linked |= {f"{n}.md" for n in re.findall(_NAME, tail)}
 
         for t in sorted(linked):
             if not (mem / t).exists():
@@ -134,6 +152,23 @@ def main() -> int:
             for f in mem_files:
                 if f.name != "MEMORY.md" and f.name not in linked:
                     issues.append(f"memory file not indexed in MEMORY.md: {f.name}")
+
+    # ---- 2a. validity dates (2026-09-04) ----------------------------------------
+    # A memory may carry valid_until: YYYY-MM-DD. Past that date it is still on
+    # disk and still recalled (flagged EXPIRED by the hook), but it has left the
+    # derived page and should be archived (memory_archive.py) or extended.
+    import re as _re, time as _time2
+    _today = _time2.strftime("%Y-%m-%d")
+    for f in sorted(mem_files):
+        if f.name == "MEMORY.md":
+            continue
+        try:
+            head = f.read_text(encoding="utf-8", errors="ignore")[:800]
+        except OSError:
+            continue
+        m = _re.search(r"^\s*valid_until:\s*['\"]?(\d{4}-\d{2}-\d{2})", head, _re.M)
+        if m and m.group(1) < _today:
+            issues.append(f"memory expired {m.group(1)} — archive it (memory_archive.py) or extend valid_until: {f.name}")
 
     # ---- 2b. recall-index coverage (the layer that now carries reachability) --
     # With a derived, capped MEMORY.md, "every memory is reachable" rests on the
