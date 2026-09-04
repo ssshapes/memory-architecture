@@ -30,6 +30,8 @@ Nine pieces, each doing one job:
 
 Plus two closing commands (`save-clear`, `save-kill`) and a `spinoff` skill, which are the seam discipline around all of it: how a session ends without losing anything, and how work gets handed to a new one.
 
+**Since September 2026, three more organs, documented on the page ahead of the code.** The always-loaded index file is no longer written by hand: a generator rebuilds it from measured use (every hit the recall hook returns is counted), pins the rules-of-engagement memories, and fills a fixed byte budget, so the store grows while the loaded page stays one page. Retirement goes through an archive tool that stamps why and what replaced a memory, so the archive can answer "what did this system used to believe?" And because the page may now omit things by design, the lint checks the layer that actually carries reachability: every memory on disk must be in the recall index. The page's section "The derived index" walks all three with diagrams. Sanitized copies of the two new scripts land here after they have run for a few weeks.
+
 ## The four guarantees
 
 The organs are ordinary code. Anyone can write hybrid retrieval in an afternoon. What is worth copying is the conduct, because every one of these was learned by getting it wrong first.
