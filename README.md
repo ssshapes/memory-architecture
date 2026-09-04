@@ -23,14 +23,16 @@ Nine pieces, each doing one job:
 | `memory_episodic.py` | PreCompact, SessionEnd | Captures the transcript as a verbatim record plus a small indexed card |
 | `bin/checkpoint.py` | timer | Runs the capture engine against sessions still alive, so a long session cannot hold days of unwritten conversation |
 | `validate_os_memory.py` | PostToolUse (Write, Edit) | Blocks unsourced citation identifiers and index-file overflow; warns on unsourced quantified claims |
-| `os_lint.py` | SessionStart | Corpus-wide consistency: broken graph edges, index integrity, generated-text tells |
+| `os_lint.py` | SessionStart | Corpus-wide consistency: broken graph edges, a stale derived page, memories missing from the recall index, generated-text tells |
+| `build_memory_index.py` | weekly timer, and at the end of `/consolidate` | Derives MEMORY.md from measured use: pins the rules-of-engagement memories, ranks the rest by recall count and inbound links, fills a fixed byte budget, lists the rest below the fold |
+| `memory_archive.py` | you run it | Retires a memory with a reason and a pointer to what replaced it, so the archive answers "what did this used to believe?" instead of being a graveyard |
 | `metabolism_stats.py` | on demand, in the closing checklist | Back-pressure: says when the store has grown enough to be worth a pass |
 | `recall_stats.py` | on demand | What recall actually surfaces, which is the only honest input to an eviction decision |
 | `commands/consolidate.md` | you run it | Distills captured sessions into durable memories. Proposes. Never writes on its own |
 
 Plus two closing commands (`save-clear`, `save-kill`) and a `spinoff` skill, which are the seam discipline around all of it: how a session ends without losing anything, and how work gets handed to a new one.
 
-**Since September 2026, three more organs, documented on the page ahead of the code.** The always-loaded index file is no longer written by hand: a generator rebuilds it from measured use (every hit the recall hook returns is counted), pins the rules-of-engagement memories, and fills a fixed byte budget, so the store grows while the loaded page stays one page. Retirement goes through an archive tool that stamps why and what replaced a memory, so the archive can answer "what did this system used to believe?" And because the page may now omit things by design, the lint checks the layer that actually carries reachability: every memory on disk must be in the recall index. The page's section "The derived index" walks all three with diagrams. Sanitized copies of the two new scripts land here after they have run for a few weeks.
+**Three organs added in September 2026, on the page and in `hooks/`.** The always-loaded index file is no longer written by hand: a generator rebuilds it from measured use (every hit the recall hook returns is counted), pins the rules-of-engagement memories, and fills a fixed byte budget, so the store grows while the loaded page stays one page. Retirement goes through an archive tool that stamps why and what replaced a memory, so the archive can answer "what did this system used to believe?" And because the page may now omit things by design, the lint checks the layer that actually carries reachability: every memory on disk must be in the recall index. The page's section "The derived index" walks all three with diagrams; `build_memory_index.py` and `memory_archive.py` are in `hooks/`, and the coverage check is in `os_lint.py`.
 
 ## The four guarantees
 
@@ -64,6 +66,8 @@ hooks/
   memory_episodic.py  transcript capture
   validate_os_memory.py  write-time provenance validator
   os_lint.py        corpus-wide lint
+  build_memory_index.py  derives MEMORY.md from the recall log (weekly)
+  memory_archive.py  retire a memory with a reason and a successor
   metabolism_stats.py    growth pressure
   recall_stats.py   recall-frequency reader
 bin/checkpoint.py   out-of-session capture for long-running sessions

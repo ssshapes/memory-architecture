@@ -34,11 +34,15 @@ It runs **propose-first**. It never writes or edits a memory without in-session 
 - **Every new or updated memory cites the session it came from.** Unsourced durable claims are exactly what the validator exists to catch, and a consolidation pass that invents provenance is worse than no pass.
 - After applying, write today's date to the watermark. **A zero-proposal run also advances it.** Those sessions were consolidated; nothing durable was found. Do not rescan them forever.
 
-## Eviction
+## Eviction, and the page
 
-Do not evict on age or link count. A dry run of that heuristic selected nearly the entire body of stable working doctrine, because settled rules are rarely edited and rarely linked while being in context every session. Age measures edit recency, link count measures graph centrality, and neither measures value.
+Do not evict on age or link count. A dry run of that heuristic selected nearly the entire body of stable working doctrine, because settled rules are rarely edited and rarely linked, and they are exactly what must stay.
 
-Use recall frequency instead. `recall_stats.py` reads what recall actually surfaced. The rule, once a full window of data exists: zero recalls across the window AND a long time since the last edit means archive candidate. Archive, never delete.
+Since the always-loaded page became a derived view (`build_memory_index.py`), eviction for *space* no longer exists as a decision: the generator fills the page from measured use and lists the rest below the fold, and memories that miss the page are still retrieved per prompt. Retirement is only for memories that are **wrong** or **superseded**, and it goes through `memory_archive.py archive <name> --reason superseded --into <survivor>` so the archive keeps the trail. "Nothing to archive" is the normal outcome of a healthy run, not a failure.
+
+**Last step of every pass:** regenerate the page, never shave it by hand:
+
+    python3 .claude/hooks/build_memory_index.py --apply
 
 ## Guardrails
 
