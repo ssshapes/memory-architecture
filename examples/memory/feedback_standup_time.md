@@ -1,5 +1,5 @@
 ---
-name: feedback-standup-time
+name: feedback_standup_time
 description: Standup is 9:15, not 9:00. Never propose a 9:00 start.
 metadata:
   type: feedback

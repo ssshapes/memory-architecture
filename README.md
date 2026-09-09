@@ -12,7 +12,7 @@ That sentence is the whole posture. This is a reference implementation, not a pr
 
 ## What it does
 
-You type a prompt. Before the model sees it, a hook searches everything you have written, finds the handful of documents that bear on it, and injects them. When the session ends, or compacts, or just sits there for a day, another hook writes the conversation down so it stops being something the window was holding. Every write to the memory store that goes through Claude Code's own Write and Edit tools gets checked as it happens; a write from outside the hook's reach (your editor, a script) is caught at the next index rebuild instead. Once a week something reads the pile and proposes what should be distilled, merged or retired, and you approve it by hand.
+You type a prompt. Before the model sees it, a hook searches everything you have written, finds the handful of documents that bear on it, and injects them. When the session ends, or compacts, or just sits there for a day, another hook writes the conversation down so it stops being something the window was holding. Every write to the memory store that goes through Claude Code's own Write and Edit tools gets checked the moment it lands, and a bad one is handed back to the agent to fix (the check runs after the write, not before it); a write from outside the hook's reach (your editor, a script) is caught at the next index rebuild instead. Once a week something reads the pile and proposes what should be distilled, merged or retired, and you approve it by hand.
 
 Nine pieces, each doing one job:
 
@@ -22,7 +22,7 @@ Nine pieces, each doing one job:
 | `memory_sync.py` | SessionStart | Rebuilds the index from changed files only |
 | `memory_episodic.py` | PreCompact, SessionEnd | Captures the transcript as a verbatim record plus a small indexed card |
 | `bin/checkpoint.py` | timer | Runs the capture engine against sessions still alive, so a long session cannot hold days of unwritten conversation |
-| `validate_os_memory.py` | PostToolUse (Write, Edit) | Blocks unsourced citation identifiers and index-file overflow; warns on unsourced quantified claims |
+| `validate_os_memory.py` | PostToolUse (Write, Edit) | Checks each memory write as it lands: unsourced citation identifiers and index-file overflow are flagged back to the agent to repair, quantified claims without a source get a warning. It runs after the write, so it corrects rather than prevents |
 | `os_lint.py` | SessionStart | Corpus-wide consistency: broken graph edges, a stale derived page, memories missing from the recall index, generated-text tells |
 | `build_memory_index.py` | weekly timer, and at the end of `/consolidate` | Derives MEMORY.md from measured use: pins the rules-of-engagement memories, ranks the rest by recall count and inbound links, fills a fixed byte budget, lists the rest below the fold |
 | `memory_archive.py` | you run it | Retires a memory with a reason and a pointer to what replaced it, so the archive answers "what did this used to believe?" instead of being a graveyard |
