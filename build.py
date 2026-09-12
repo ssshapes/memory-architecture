@@ -4,8 +4,8 @@ build — produce the public organs from a private OS, and refuse to publish a l
 
 This repo is a reference implementation extracted from a working private system.
 The extraction is a script rather than a one-time copy-paste for one reason: the
-private originals keep changing, and a hand-sanitized copy rots silently. Run
-this before every publish and the sanitization is re-proved instead of assumed.
+private originals keep changing, and a copy edited by hand rots silently. Run
+this before every publish and the extraction is re-proved instead of assumed.
 
     python3 build.py --source /path/to/your-private-os
     python3 build.py --check          # leak-check the tree, build nothing

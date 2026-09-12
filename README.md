@@ -1,12 +1,18 @@
 # Memory architecture
 
-A working memory system for [Claude Code](https://claude.com/claude-code): retrieval, capture, validation and consolidation, wired to the agent's own hook events. It runs a personal operating system of a few hundred markdown files across three repos, every day, and has since June 2026.
+A memory system for [Claude Code](https://claude.com/claude-code) - retrieval, capture, validation and consolidation, wired to the agent's own hook events.
 
-**Start with the page, not the code: [the architecture, explained end to end](https://ssshapes.github.io/memory-architecture/).** It walks one prompt through the whole circulation, names each organ, and gives the lineage for every borrowed idea. The code in this repo is that page made runnable.
+I use it to run a personal operating system: a few hundred markdown files across three repos, covering three properties, an EMBA, a family and everything that falls out of those. The corpus goes back to January 2026. The organs that tend it have been running as hooks since June.
+
+Here's the thing that made me build it. One morning in August I tapped a checkbox on my own dashboard to mark a school assignment submitted. Two weeks later my board was still telling me it was due. Nothing was broken. Every piece worked exactly as written. The queue that processes those taps only ran when I typed a command I never type, and I drive most of this from my phone. So the information just sat there, being correct, in a place nothing looked.
+
+That's the problem I actually care about, and it isn't the model. It's whether the right thing is in front of it at the right moment, and whether what I figured out last month is still there this month. Everything in this repo is one attempt at that.
+
+**Start with the page, not the code: [the architecture, explained end to end](https://ssshapes.github.io/memory-architecture/).** It walks one prompt through the whole circulation, names each organ, and gives the lineage for every borrowed idea. The code here is that page made runnable.
+
+This is a nights-and-weekends build. I started by reading how OpenClaw, GrepSeek and Mem0 handle memory and taking whatever fit my situation. It's a reference implementation, not a product. There's no roadmap and I'm not maintaining it for anyone. The interesting part was never the organs anyway. It's the corpus they tend, and that part stays on my machine.
 
 > This is how mine works. Fork it. I don't take feature requests.
-
-That sentence is the whole posture. This is a reference implementation, not a product. There is no roadmap, no support, no versioning policy. If it is useful, take it and make it yours. The moat was never the organs anyway, it is the corpus they tend, and that stays private by construction.
 
 ---
 
@@ -36,15 +42,15 @@ Plus two closing commands (`save-clear`, `save-kill`) and a `spinoff` skill, whi
 
 ## The four guarantees
 
-The organs are ordinary code. Anyone can write hybrid retrieval in an afternoon. What is worth copying is the conduct, because every one of these was learned by getting it wrong first.
+The organs are ordinary code. Anyone can write hybrid retrieval in an afternoon. What's worth copying is the conduct, and I learned every one of these by getting it wrong first.
 
-**Propose, never mutate.** No organ deletes, merges or edits a memory on its own. Consolidation writes a proposal and waits. Metabolism prints a pressure line and waits. This is not caution for its own sake: forgetting is the one operation you cannot audit after the fact, because the evidence is what got removed.
+**Propose, never mutate.** No organ deletes, merges or edits a memory on its own. Consolidation writes a proposal and waits. Metabolism prints a pressure line and waits. The consolidation pass once proposed retiring eight captured sessions. Six were genuinely junk. Two weren't, and I only caught it because I was reading a list instead of a diff of something already gone. Forgetting is the one operation you can't audit afterward, because the evidence is the thing that got removed.
 
-**Fail open, everywhere.** Every hook exits 0 on any error. A recall bug injects nothing, a capture bug captures nothing, and the session carries on. A memory system that can break your prompt is worse than no memory system, and you will find out at the worst moment.
+**Fail open, everywhere.** Every hook exits 0 on any error. A recall bug injects nothing, a capture bug captures nothing, the session carries on. I'm confident about this one because I got the other half wrong: I had a routine that ran hourly, exited clean every time, and reported "nothing to do" for three hours straight while the tool it needed wasn't loaded at all. Exiting 0 is the right behavior. Exiting 0 without saying what you couldn't do is how a dead system looks healthy.
 
-**Files over database.** Memories are markdown, one durable fact per file, readable and editable with anything, including your hands. The SQLite index is derived and disposable: delete it and the next session rebuilds it. Nothing that matters lives anywhere you cannot read it without this code.
+**Files over database.** Memories are markdown, one durable fact per file, readable and editable with anything, including your hands. The SQLite index is derived and disposable - delete it and the next session rebuilds it. The reason I care: a cached snapshot on my dashboard rendered perfectly for thirty-seven days after the data behind it went stale. It looked more trustworthy than the live thing, because it sat still. Anything that matters should live somewhere you can open without this code.
 
-**Local embeddings.** Retrieval runs on a small model on your machine: the similarity search itself never leaves the box, and no third-party embedding API sees your memory store. The prompt and whatever the hook injects still go to the model provider, as in any Claude Code session — this bounds what the retrieval layer adds, which is nothing.
+**Local embeddings.** Retrieval runs on a small model on your machine. The similarity search never leaves the box and no third-party embedding API sees your memory store. Your prompt and whatever the hook injects still go to the model provider, same as any Claude Code session - this bounds what the retrieval layer adds, which is nothing.
 
 ## What it deliberately is not
 
