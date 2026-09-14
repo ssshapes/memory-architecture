@@ -4,13 +4,15 @@ A memory system for [Claude Code](https://claude.com/claude-code) - retrieval, c
 
 I use it to run a personal operating system: a few hundred markdown files across three repos, covering three properties, an EMBA, a family and everything that falls out of those. The corpus goes back to January 2026. The organs that tend it have been running as hooks since June.
 
-Here's the thing that made me build it. One morning in August I tapped a checkbox on my own dashboard to mark a school assignment submitted. Two weeks later my board was still telling me it was due. Nothing was broken. Every piece worked exactly as written. The queue that processes those taps only ran when I typed a command I never type, and I drive most of this from my phone. So the information just sat there, being correct, in a place nothing looked.
+Here's what made me build it. I was working out business and product strategy in chat windows, and the thinking kept drifting. Everything gets mushy. Including me, which is why I needed help.
 
-That's the problem I actually care about, and it isn't the model. It's whether the right thing is in front of it at the right moment, and whether what I figured out last month is still there this month. Everything in this repo is one attempt at that.
+So I asked what was actually going wrong. The answer split drift in two. One kind is context loss, where the model forgets what you told it. The other is semantic drift, where the language slowly changes: definitions blur, prior decisions get reinterpreted, tone and intent mutate. Mine was the second kind. A friend who'd recently joined a frontier lab told me agents can write notes to themselves, and that some of his colleagues were obsessed with OpenClaw memory techniques.
+
+That's the problem I care about, and it isn't the model. It's whether what I decided last month still means the same thing this month, with the reason still attached. Everything in this repo is one attempt at that.
 
 **Start with the page, not the code: [the architecture, explained end to end](https://ssshapes.github.io/memory-architecture/).** It walks one prompt through the whole circulation, names each organ, and gives the lineage for every borrowed idea. The code here is that page made runnable.
 
-This is a nights-and-weekends build. I started by reading how OpenClaw, GrepSeek and Mem0 handle memory and taking whatever fit my situation. It's a reference implementation, not a product. There's no roadmap and I'm not maintaining it for anyone. The interesting part was never the organs anyway. It's the corpus they tend, and that part stays on my machine.
+This is a nights-and-weekends build. I started from other people's work: the OpenClaw memory-harness ideas, how GrepSeek and Mem0 handle retrieval, and the personal operating system templates Aakash Gupta and Wyndo publish. It's a reference implementation, not a product. There's no roadmap and I'm not maintaining it for anyone. The interesting part was never the organs anyway. It's the corpus they tend, and that part stays on my machine.
 
 > This is how mine works. Fork it. I don't take feature requests.
 
