@@ -2,19 +2,17 @@
 
 A memory system for [Claude Code](https://claude.com/claude-code) - retrieval, capture, validation and consolidation, wired to the agent's own hook events.
 
-I use it to run a personal operating system: a few hundred markdown files across three repos, covering a day job, three properties, an EMBA, a family and everything that falls out of those. The corpus goes back to January 2026. The organs that tend it have been running as hooks since June.
+I use it to run a couple of personal operating systems: a few hundred markdown files across three repos, covering a day job, three properties, an EMBA, a family and everything that falls out of those. The corpus goes back to January 2026 and has been evolving since then.
 
-Here's what made me build it. I was working out business and product strategy in chat windows, and the thinking kept drifting. Everything gets mushy. Including me, which is why I needed help.
+I was working out business and product strategy in chat windows, and the thinking kept drifting. Everything gets mushy. Including me, which is why I needed help.
 
 So I asked what was actually going wrong. The answer split drift in two. One kind is context loss, where the model forgets what you told it. The other is semantic drift, where the language slowly changes: definitions blur, prior decisions get reinterpreted, tone and intent mutate. Mine was the second kind. A friend who'd recently joined a frontier lab told me agents can write notes to themselves, and that some of his colleagues were obsessed with OpenClaw memory techniques.
 
-That's the problem I care about, and it isn't the model. It's whether what I decided last month still means the same thing this month, with the reason still attached. Everything in this repo is one attempt at that.
+The problem I care about is dynamic context management: saving what's important and recalling what's important in a way that feels natural, frictionless and additive, with some measure of validation and trustworthiness. Everything in this repo is one attempt at that.
 
 **Start with the page, not the code: [the architecture, explained end to end](https://ssshapes.github.io/memory-architecture/).** It walks one prompt through the whole circulation, names each organ, and gives the lineage for every borrowed idea. The code here is that page made runnable.
 
-This is a nights-and-weekends build. I started from other people's work: the OpenClaw memory-harness ideas, how GrepSeek and Mem0 handle retrieval, and the personal operating system templates Aakash Gupta and Wyndo publish. It's a reference implementation, not a product. There's no roadmap and I'm not maintaining it for anyone. The interesting part was never the organs anyway. It's the corpus they tend, and that part stays on my machine.
-
-> This is how mine works. Fork it. I don't take feature requests.
+This is a nights-and-weekends build. I started from other people's work: the OpenClaw memory-harness ideas, how GrepSeek and Mem0 handle retrieval, and the personal operating system templates Aakash Gupta and Wyndo publish. It's a reference implementation, not a product.
 
 ---
 
@@ -22,7 +20,7 @@ This is a nights-and-weekends build. I started from other people's work: the Ope
 
 You type a prompt. Before the model sees it, a hook searches everything you have written, finds the handful of documents that bear on it, and injects them. When the session ends, or compacts, or just sits there for a day, another hook writes the conversation down so it stops being something the window was holding. Every write to the memory store that goes through Claude Code's own Write and Edit tools gets checked the moment it lands, and a bad one is handed back to the agent to fix (the check runs after the write, not before it); a write from outside the hook's reach (your editor, a script) is caught at the next index rebuild instead. Once a week something reads the pile and proposes what should be distilled, merged or retired, and you approve it by hand.
 
-Nine pieces, each doing one job:
+Eleven pieces, each doing one job:
 
 | Organ | Fires on | What it does |
 |---|---|---|
@@ -59,7 +57,6 @@ The organs are ordinary code. Anyone can write hybrid retrieval in an afternoon.
 - **Not automatic forgetting.** Eviction is the obvious next organ and it is not built, on purpose. See the limitations below.
 - **Not a RAG framework.** It indexes one person's writing, not a document warehouse. Under about ten thousand files this is the right amount of machinery, and past that you want different tools.
 - **Not hosted, not synced, not multiplayer.** One machine, one user.
-- **Not maintained for you.** See the posture sentence.
 
 ## What is here
 
