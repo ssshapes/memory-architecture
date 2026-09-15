@@ -38,15 +38,15 @@ Plus two closing commands (`save-clear`, `save-kill`) and a `spinoff` skill, whi
 
 ## The four guarantees
 
-The organs are ordinary code. Anyone can write hybrid retrieval in an afternoon. What's worth copying is the conduct, and I learned every one of these by getting it wrong first.
+The organs are ordinary code. What's worth copying is the conduct.
 
-**Propose, never mutate.** No organ deletes, merges or edits a memory on its own. Consolidation writes a proposal and waits. Metabolism prints a pressure line and waits. The consolidation pass once proposed retiring eight captured sessions. Six were genuinely junk. Two weren't, and I only caught it because I was reading a list instead of a diff of something already gone. Forgetting is the one operation you can't audit afterward, because the evidence is the thing that got removed.
+**Propose, never mutate.** No organ deletes, merges or edits a memory on its own. Consolidation writes a proposal and waits for approval. Forgetting is the one operation you can't audit afterward.
 
-**Fail open, everywhere.** Every hook exits 0 on any error. A recall bug injects nothing, a capture bug captures nothing, the session carries on. I'm confident about this one because I got the other half wrong: I had a routine that ran hourly, exited clean every time, and reported "nothing to do" for three hours straight while the tool it needed wasn't loaded at all. Exiting 0 is the right behavior. Exiting 0 without saying what you couldn't do is how a dead system looks healthy.
+**Fail open, everywhere.** Every hook exits 0 on any error, so a bug never blocks the session. Exiting cleanly without saying what failed is how a dead system looks healthy.
 
-**Files over database.** Memories are markdown, one durable fact per file, readable and editable with anything, including your hands. The SQLite index is derived and disposable - delete it and the next session rebuilds it. The reason I care: a cached snapshot on my dashboard rendered perfectly for thirty-seven days after the data behind it went stale. It looked more trustworthy than the live thing, because it sat still. Anything that matters should live somewhere you can open without this code.
+**Files over database.** Memories are markdown, one fact per file, readable and editable with anything. The SQLite index is derived and disposable: delete it and the next session rebuilds it.
 
-**Local embeddings.** Retrieval runs on a small model on your machine. The similarity search never leaves the box and no third-party embedding API sees your memory store. Your prompt and whatever the hook injects still go to the model provider, same as any Claude Code session - this bounds what the retrieval layer adds, which is nothing.
+**Local embeddings.** Retrieval runs on a small model on your machine, so no third-party embedding service sees your memory store. Your prompt and whatever the hook injects still go to the model provider, as in any Claude Code session.
 
 ## What it deliberately is not
 
