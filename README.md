@@ -4,7 +4,7 @@ A memory system for [Claude Code](https://claude.com/claude-code) - retrieval, c
 
 I use it to run a couple of personal operating systems: a few hundred markdown files across three repos, covering a day job, three properties, an EMBA, a family and everything that falls out of those. The corpus goes back to January 2026 and has been evolving since then.
 
-I was working out business and product strategy in chat windows, and the thinking kept drifting. Everything gets mushy. Including me, which is why I needed help.
+I was working out business and product strategy in chat windows, and the thinking kept drifting.
 
 So I asked what was actually going wrong. The answer split drift in two. One kind is context loss, where the model forgets what you told it. The other is semantic drift, where the language slowly changes: definitions blur, prior decisions get reinterpreted, tone and intent mutate. Mine was the second kind. A friend who'd recently joined a frontier lab told me agents can write notes to themselves, and that some of his colleagues were obsessed with OpenClaw memory techniques.
 
