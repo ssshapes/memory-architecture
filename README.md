@@ -4,11 +4,9 @@ A memory system for [Claude Code](https://claude.com/claude-code) - retrieval, c
 
 I use it to run a couple of personal operating systems: a few thousand markdown files across three repos, covering a day job, three properties, an EMBA, a family and everything that falls out of those. The corpus goes back to January 2026 and has been evolving since then.
 
-I was working out business and product strategy in chat windows, and the thinking kept drifting.
+I was working out business and product strategy in chat windows, and the thinking kept drifting. Not the model forgetting what I'd told it, but the language slowly changing: definitions blurred, prior decisions got reinterpreted. A friend who'd recently joined a frontier lab told me agents can write notes to themselves.
 
-So I asked what was actually going wrong. The answer split drift in two. One kind is context loss, where the model forgets what you told it. The other is semantic drift, where the language slowly changes: definitions blur, prior decisions get reinterpreted, tone and intent mutate. Mine was the second kind. A friend who'd recently joined a frontier lab told me agents can write notes to themselves, and that some of his colleagues were obsessed with OpenClaw memory techniques.
-
-The problem I care about is dynamic context management: saving what's important and recalling what's important in a way that feels natural, frictionless and additive, with some measure of validation and trustworthiness. Everything in this repo is one attempt at that.
+I realized that the problem I care about is dynamic context management: saving what's important and recalling it in a way that feels natural and additive, with enough validation that I can trust it. Everything in this repo is one attempt at that.
 
 **Start with the page, not the code: [the architecture, explained end to end](https://ssshapes.github.io/memory-architecture/).** It walks one prompt through the whole circulation, names each organ, and gives the lineage for every borrowed idea. The code here is that page made runnable.
 
