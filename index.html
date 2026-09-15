@@ -175,7 +175,7 @@ svg a:hover .svg-title, svg a:focus .svg-title { fill:var(--accent); }
 
 <header class="doc">
   <h1>Memory architecture</h1>
-  <p class="dek">The personal OS is a memory prosthesis for a frontier model. The model arrives brilliant and amnesiac: trained on everything in general, knowing nothing about this life in particular, and the particulars change daily. Every organ below closes that gap without guessing a fact, losing a day silently, or believing something it can't source. This is one running instance of a portable pattern; the specifics are examples, the architecture is the point.</p>
+  <p class="dek">The personal OS is a memory prosthesis for a frontier model. The model arrives brilliant and amnesiac: trained on everything in general, knowing nothing about this life in particular, and the particulars change daily. Every organ below works at that gap: sourcing what it asserts, saying when it could not run, and leaving a record either way. This is one running instance of a portable pattern; the specifics are examples, the architecture is the point.</p>
   <div class="meta"><a href="https://thomassimondesign.com" style="color:var(--ink);text-decoration:none;border-bottom:1px solid var(--accent)">Thomas Simon</a> · <a href="mailto:thomasjsimon@gmail.com" style="color:var(--faint);text-decoration:none">thomasjsimon@gmail.com</a> · personal OS · how it remembers · rewritten <b>2026-07-15</b> · stores expanded <b>2026-07-28</b> · index derived <b>2026-09-03</b> · living document, regenerate when the wiring changes</div>
 </header>
 
@@ -310,7 +310,7 @@ svg a:hover .svg-title, svg a:focus .svg-title { fill:var(--accent); }
 </svg>
 <figcaption>One turn: recall in, model out, write through the gate, capture at close, consolidate back. Solid black is the synchronous path. Red marks the two safeguards: recall decides what gets in, the validator gate decides what gets written. Dashed lines are the slow metabolism, capture at session end and consolidation on a cadence. The dotted red line at the top is the newest loop: the always-loaded page is derived from the store, ranked by what recall actually used (zoomed in under “The derived index”). Nothing personal ever enters the weights. <b>The four store boxes are tappable.</b></figcaption>
 <div class="replay" aria-label="A worked example of one prompt moving through the system">
-  <div class="rp-head">One prompt, replayed <span>· 12-second loop, synced to the pulses above</span></div>
+  <div class="rp-head">One prompt, replayed <span>· the three example memories shipped in the repo, so you can run it yourself</span></div>
   <div class="rp b1"><span class="rk">prompt</span>"Marco quoted $1,400 for the boiler. Same guy as last winter?"</div>
   <div class="rp b2"><span class="rk rk-red">recall</span>hits: <code>people/marco-rivera.md</code> · last winter's session card · the boiler ledger, injected into context</div>
   <div class="rp b3"><span class="rk">model</span>same Marco. Last winter's job was $1,150; this quote adds the expansion tank</div>
@@ -397,7 +397,7 @@ svg a:hover .svg-title, svg a:focus .svg-title { fill:var(--accent); }
 
 <div class="store" id="store-index" style="border-bottom:none">
   <div class="lbl">index.db · the search layer <a class="up" href="#circulation">&uarr; diagram</a></div>
-  <p>Not a store of beliefs: a derived lookup over the stores above, rebuilt at every session start and queried on every prompt (keyword plus vector, rank-fused, one hop along wikilinks). The files are the truth; index.db is how a two-second lookup finds them. Every hit is counted in a recall log, which ranks the always-loaded page. And since that page may omit things, <b>this index is what guarantees every memory is reachable</b>: lint checks at every session start that every memory file is in it.</p>
+  <p>Not a store of beliefs: a derived lookup over the stores above, rebuilt at every session start and queried on every prompt (keyword plus vector, rank-fused, one hop along wikilinks). The files are the truth; index.db is how a two-second lookup finds them. Every hit is counted in a recall log, which ranks the always-loaded page. And since that page may omit things, <b>this index is what keeps every memory reachable</b>: a lint at every session start checks that every memory file is in it, and says so when one is not.</p>
 </div>
 </section>
 
@@ -430,7 +430,7 @@ svg a:hover .svg-title, svg a:focus .svg-title { fill:var(--accent); }
   <text x="324" y="193" class="svg-small" fill="#5f5f5f">model works · file edits hit the disk</text>
   <text x="324" y="215" class="svg-small" fill="#5f5f5f">memory writes pass the gate</text>
   <text x="324" y="230" class="svg-tool">validate_os_memory.py</text>
-  <text x="324" y="252" class="svg-label svg-red" font-size="10">files are fleet-visible instantly</text>
+  <text x="324" y="252" class="svg-label svg-red" font-size="10">files are fleet-visible at next sync</text>
 
   <rect x="600" y="90" width="260" height="200" fill="none" stroke="#0a0a0a" stroke-width="1.5"/>
   <text x="614" y="116" class="svg-title">Close-out</text>

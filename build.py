@@ -843,6 +843,10 @@ NAME_STOPWORDS = {
     "list", "roster", "group", "team", "school", "cohorts",
 }
 
+# People-store stems exempt from the name sweep because the repo cites them on
+# purpose. Keep this list short and only for genuinely published work.
+PUBLIC_CITATIONS = {"cal-paterson"}
+
 # Stem tokens that mark a file in the people store as a catalog of the network
 # (roster, index, map, template) rather than a record of one person. derive_bans
 # skips these files entirely — see the comment at the skip site.
@@ -908,6 +912,13 @@ def derive_bans(source: Path, ban_file: Path) -> list[tuple[str, str]]:
         if not d.is_dir():
             continue
         for f in d.glob("*.md"):
+            # Published authors this repo credits by name. A citation is not a
+            # leak: the same reasoning that leaves organisation names unswept.
+            # Keyed on the people-store stem so that filing a contact card for
+            # someone you already cite in public does not retroactively ban the
+            # citation — which is exactly how this exemption got written.
+            if f.stem.lower() in PUBLIC_CITATIONS:
+                continue
             parts = [p for p in re.split(r"[-_]", f.stem.lower()) if p]
             # A stem carrying any of these tokens catalogs the network — a
             # roster, index, or map — rather than naming one person. Skip the
