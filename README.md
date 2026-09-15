@@ -2,7 +2,7 @@
 
 A memory system for [Claude Code](https://claude.com/claude-code) - retrieval, capture, validation and consolidation, wired to the agent's own hook events.
 
-I use it to run a personal operating system: a few hundred markdown files across three repos, covering three properties, an EMBA, a family and everything that falls out of those. The corpus goes back to January 2026. The organs that tend it have been running as hooks since June.
+I use it to run a personal operating system: a few hundred markdown files across three repos, covering a day job, three properties, an EMBA, a family and everything that falls out of those. The corpus goes back to January 2026. The organs that tend it have been running as hooks since June.
 
 Here's what made me build it. I was working out business and product strategy in chat windows, and the thinking kept drifting. Everything gets mushy. Including me, which is why I needed help.
 
